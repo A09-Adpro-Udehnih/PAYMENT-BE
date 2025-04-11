@@ -8,7 +8,6 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PaymentTest {
-
     @Test
     void testCreatePaymentEntity() {
         Payment payment = Payment.builder()
