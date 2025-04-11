@@ -3,7 +3,6 @@ package com.example.paymentbe.service;
 import com.example.paymentbe.dto.PaymentRequest;
 import com.example.paymentbe.dto.PaymentResponse;
 import com.example.paymentbe.model.Payment;
-import com.example.paymentbe.model.PaymentMethod;
 import com.example.paymentbe.model.PaymentStatus;
 import com.example.paymentbe.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
