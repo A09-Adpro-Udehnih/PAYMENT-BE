@@ -23,16 +23,29 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponse processPayment(PaymentRequest request) {
         PaymentStrategy strategy = strategyFactory.getStrategy(request.getMethod());
-        boolean isSuccess = strategy.processPayment(request.getAmount());
+        boolean paymentSuccess = strategy.processPayment(request.getAmount());
 
-        PaymentStatus status = isSuccess ? 
-            (request.getMethod() == PaymentMethod.BANK_TRANSFER ? 
-                PaymentStatus.PENDING : PaymentStatus.PAID) : 
-            PaymentStatus.FAILED;
+        PaymentStatus status = determinePaymentStatus(request.getMethod(), paymentSuccess);
+        String paymentRef = generatePaymentReference();
 
-        String paymentRef = "PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        Payment payment = buildPaymentEntity(request, status, paymentRef);
+        Payment savedPayment = paymentRepository.save(payment);
 
-        Payment payment = Payment.builder()
+        return buildPaymentResponse(savedPayment, paymentSuccess, status);
+    }
+
+    // Helper methods
+    private PaymentStatus determinePaymentStatus(PaymentMethod method, boolean success) {
+        if (!success) return PaymentStatus.FAILED;
+        return method == PaymentMethod.BANK_TRANSFER ? PaymentStatus.PENDING : PaymentStatus.PAID;
+    }
+
+    private String generatePaymentReference() {
+        return "PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private Payment buildPaymentEntity(PaymentRequest request, PaymentStatus status, String paymentRef) {
+        return Payment.builder()
                 .userId(request.getUserId())
                 .courseId(request.getCourseId())
                 .courseName(request.getCourseName())
@@ -43,17 +56,19 @@ public class PaymentServiceImpl implements PaymentService {
                 .transactionDate(LocalDateTime.now())
                 .paymentReference(paymentRef)
                 .build();
+    }
 
-        Payment savedPayment = paymentRepository.save(payment);
-
+    private PaymentResponse buildPaymentResponse(Payment payment, boolean success, PaymentStatus status) {
+        String message = success ? 
+            (status == PaymentStatus.PENDING ? 
+                "Waiting for bank transfer confirmation" : "Payment successful") : 
+            "Payment failed";
+            
         return PaymentResponse.builder()
-                .paymentId(savedPayment.getId().toString())
-                .status(savedPayment.getStatus())
-                .message(isSuccess ? 
-                    (status == PaymentStatus.PENDING ? 
-                        "Waiting for bank transfer confirmation" : "Payment successful") : 
-                    "Payment failed")
-                .paymentReference(savedPayment.getPaymentReference())
+                .paymentId(payment.getId().toString())
+                .status(payment.getStatus())
+                .message(message)
+                .paymentReference(payment.getPaymentReference())
                 .build();
     }
 
