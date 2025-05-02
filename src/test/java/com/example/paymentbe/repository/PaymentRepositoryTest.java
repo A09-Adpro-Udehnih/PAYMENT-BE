@@ -7,7 +7,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,11 +31,12 @@ class PaymentRepositoryTest {
                 .method(PaymentMethod.CREDIT_CARD)
                 .status(PaymentStatus.PAID)
                 .transactionDate(LocalDateTime.now())
-                .paymentReference("REF123")
                 .build();
 
-        Payment saved = paymentRepository.save(payment);
-        Payment found = paymentRepository.findById(saved.getId()).orElse(null);
+        entityManager.persist(payment);
+        entityManager.flush();
+
+        Payment found = paymentRepository.findById(payment.getId()).orElse(null);
 
         assertThat(found).isNotNull();
         assertThat(found.getUserId()).isEqualTo("user1");
