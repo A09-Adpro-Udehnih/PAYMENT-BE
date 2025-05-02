@@ -17,7 +17,7 @@ class PaymentTest {
                 .method(PaymentMethod.BANK_TRANSFER)
                 .status(PaymentStatus.PENDING)
                 .paymentReference("ref123")
-                .createdAt(LocalDateTime.now())
+                .transactionDate(LocalDateTime.now())
                 .build();
 
         assertEquals("user123", payment.getUserId());
