@@ -10,4 +10,5 @@ public class PaymentResponse {
     private String paymentId;
     private PaymentStatus status;
     private String message;
+    private String paymentReference;
 }
