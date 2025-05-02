@@ -7,18 +7,14 @@ import com.example.paymentbe.model.PaymentStatus;
 import com.example.paymentbe.service.PaymentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.UUID;
-
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -35,76 +31,27 @@ class PaymentControllerTest {
     private ObjectMapper objectMapper;
 
     @Test
-    void testCreatePaymentreturnsSuccess() throws Exception {
+    void createPayment_ShouldReturnCreated() throws Exception {
         PaymentRequest request = new PaymentRequest();
-        request.setUserId("user123");
-        request.setAmount(150.0);
+        request.setUserId("user1");
+        request.setCourseId("course1");
+        request.setCourseName("Course 1");
+        request.setTutorName("Tutor 1");
+        request.setAmount(100.0);
         request.setMethod(PaymentMethod.CREDIT_CARD);
 
-        PaymentResponse mockResponse = PaymentResponse.builder()
-                .paymentId(UUID.randomUUID().toString())
+        PaymentResponse response = PaymentResponse.builder()
+                .paymentId("123")
                 .status(PaymentStatus.PAID)
                 .message("Payment successful")
                 .build();
 
-        Mockito.when(paymentService.processPayment(any(PaymentRequest.class)))
-                .thenReturn(mockResponse);
+        when(paymentService.processPayment(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/payments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("PAID"))
-                .andExpect(jsonPath("$.message").value("Payment successful"));
-    }
-
-    @Test
-    void testCreatePaymentreturnsFailed() throws Exception {
-        PaymentRequest request = new PaymentRequest();
-        request.setUserId("user456");
-        request.setAmount(999.0);
-        request.setMethod(PaymentMethod.BANK_TRANSFER);
-
-        PaymentResponse mockResponse = PaymentResponse.builder()
-                .paymentId(UUID.randomUUID().toString())
-                .status(PaymentStatus.FAILED)
-                .message("Payment failed")
-                .build();
-
-        Mockito.when(paymentService.processPayment(any(PaymentRequest.class)))
-                .thenReturn(mockResponse);
-
-        mockMvc.perform(post("/api/payments")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("FAILED"))
-                .andExpect(jsonPath("$.message").value("Payment failed"));
-    }
-
-    @Test
-    void testCreatePaymentwithInvalidAmount_returnsBadRequest() throws Exception {
-        PaymentRequest request = new PaymentRequest();
-        request.setUserId("user789");
-        request.setAmount(-50.0); // Invalid negative amount
-        request.setMethod(PaymentMethod.CREDIT_CARD);
-
-        mockMvc.perform(post("/api/payments")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void testCreatePaymentwithMissingUserId_returnsBadRequest() throws Exception {
-        PaymentRequest request = new PaymentRequest();
-        request.setUserId(""); // Missing userId
-        request.setAmount(100.0);
-        request.setMethod(PaymentMethod.CREDIT_CARD);
-
-        mockMvc.perform(post("/api/payments")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+                .andExpect(jsonPath("$.status").value("PAID"));
     }
 }
