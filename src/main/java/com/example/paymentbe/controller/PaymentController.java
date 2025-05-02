@@ -12,12 +12,16 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
 public class PaymentController {
-
     private final PaymentService paymentService;
 
     @PostMapping
     public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody PaymentRequest request) {
-        PaymentResponse response = paymentService.processPayment(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(paymentService.processPayment(request));
+    }
+
+    @GetMapping("/{paymentId}")
+    public ResponseEntity<PaymentResponse> getPayment(@PathVariable String paymentId) {
+        // Implementation would call service to get payment details
+        return ResponseEntity.ok().build();
     }
 }
