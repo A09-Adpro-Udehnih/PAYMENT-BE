@@ -1,19 +1,9 @@
 package com.example.paymentbe.model;
 
+import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "payments")
@@ -22,13 +12,21 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class Payment {
-
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false)
     private String userId;
+
+    @Column(nullable = false)
+    private String courseId;
+
+    @Column(nullable = false)
+    private String courseName;
+
+    @Column(nullable = false)
+    private String tutorName;
 
     @Column(nullable = false)
     private double amount;
@@ -41,7 +39,8 @@ public class Payment {
     @Column(nullable = false)
     private PaymentStatus status;
 
-    private String paymentReference;
+    @Column(nullable = false)
+    private LocalDateTime transactionDate;
 
-    private LocalDateTime createdAt;
+    private String paymentReference;
 }
