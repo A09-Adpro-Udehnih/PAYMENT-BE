@@ -1,9 +1,8 @@
-package com.example.paymentbe.service.impl;
+package com.example.paymentbe.service;
 
 import com.example.paymentbe.dto.*;
 import com.example.paymentbe.model.*;
 import com.example.paymentbe.repository.PaymentRepository;
-import com.example.paymentbe.service.PaymentService;
 import com.example.paymentbe.service.strategy.PaymentStrategy;
 import com.example.paymentbe.service.strategy.PaymentStrategyFactory;
 import lombok.RequiredArgsConstructor;
@@ -62,7 +61,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponse updatePaymentStatus(String paymentId, String status) {
         Payment payment = paymentRepository.findById(UUID.fromString(paymentId))
-                .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
 
         PaymentStatus newStatus = PaymentStatus.valueOf(status.toUpperCase());
         payment.setStatus(newStatus);
@@ -80,10 +79,10 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponse requestRefund(String paymentId, RefundRequest request) {
         Payment payment = paymentRepository.findById(UUID.fromString(paymentId))
-                .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
 
         if (payment.getStatus() != PaymentStatus.PAID) {
-            throw new PaymentException("Only PAID payments can be refunded");
+            throw new RuntimeException("Only PAID payments can be refunded");
         }
 
         payment.setStatus(PaymentStatus.REFUNDED);
