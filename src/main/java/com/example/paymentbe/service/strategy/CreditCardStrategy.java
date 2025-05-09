@@ -1,11 +1,19 @@
 package com.example.paymentbe.service.strategy;
 
-import org.springframework.stereotype.Service;
+import com.example.paymentbe.dto.PaymentRequest;
 
-@Service
 public class CreditCardStrategy implements PaymentStrategy {
     @Override
-    public boolean processPayment(double amount) {
-        return amount > 0 && amount <= 1000000;
+    public boolean process(PaymentRequest request) {
+        // Simulasi validasi kartu kredit sederhana
+        String cardNumber = request.getCardNumber();
+        String cvc = request.getCardCvc();
+        
+        boolean validCard = cardNumber != null && 
+                          cardNumber.matches("^[0-9]{13,16}$") && 
+                          cvc != null && 
+                          cvc.matches("^[0-9]{3,4}$");
+        
+        return validCard && request.getAmount() > 0;
     }
 }

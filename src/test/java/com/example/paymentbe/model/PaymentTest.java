@@ -1,6 +1,9 @@
 package com.example.paymentbe.model;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -8,20 +11,81 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PaymentTest {
+    
     @Test
-    void testCreatePaymentEntity() {
+    void testPaymentBuilder() {
+        LocalDateTime now = LocalDateTime.now();
+        UUID paymentId = UUID.randomUUID();
+        
         Payment payment = Payment.builder()
-                .id(UUID.randomUUID())
+                .id(paymentId)
                 .userId("user123")
+                .courseId("course456")
                 .amount(100.0)
-                .method(PaymentMethod.BANK_TRANSFER)
-                .status(PaymentStatus.PENDING)
-                .paymentReference("ref123")
-                .transactionDate(LocalDateTime.now())
+                .method(PaymentMethod.CREDIT_CARD)
+                .status(PaymentStatus.PAID)
+                .bankAccount(null)
+                .cardLastFour("1234")
+                .paymentReference("PAY-123456")
+                .createdAt(now)
+                .updatedAt(now)
                 .build();
 
-        assertEquals("user123", payment.getUserId());
-        assertEquals(PaymentMethod.BANK_TRANSFER, payment.getMethod());
-        assertEquals(PaymentStatus.PENDING, payment.getStatus());
+        assertAll(
+            () -> assertEquals(paymentId, payment.getId()),
+            () -> assertEquals("user123", payment.getUserId()),
+            () -> assertEquals("course456", payment.getCourseId()),
+            () -> assertEquals(100.0, payment.getAmount()),
+            () -> assertEquals(PaymentMethod.CREDIT_CARD, payment.getMethod()),
+            () -> assertEquals(PaymentStatus.PAID, payment.getStatus()),
+            () -> assertNull(payment.getBankAccount()),
+            () -> assertEquals("1234", payment.getCardLastFour()),
+            () -> assertEquals("PAY-123456", payment.getPaymentReference()),
+            () -> assertEquals(now, payment.getCreatedAt()),
+            () -> assertEquals(now, payment.getUpdatedAt())
+        );
+    }
+
+    @ParameterizedTest
+    @EnumSource(PaymentMethod.class)
+    void testPaymentMethod(PaymentMethod method) {
+        Payment payment = Payment.builder()
+                .method(method)
+                .build();
+        
+        assertEquals(method, payment.getMethod());
+    }
+
+    @ParameterizedTest
+    @EnumSource(PaymentStatus.class)
+    void testPaymentStatus(PaymentStatus status) {
+        Payment payment = Payment.builder()
+                .status(status)
+                .build();
+        
+        assertEquals(status, payment.getStatus());
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = {0.01, 100.0, 999999.99})
+    void testPaymentAmount(double amount) {
+        Payment payment = Payment.builder()
+                .amount(amount)
+                .build();
+        
+        assertEquals(amount, payment.getAmount());
+    }
+
+    @Test
+    void testPaymentWithRefund() {
+        Payment payment = Payment.builder().build();
+        Refund refund = Refund.builder()
+                .payment(payment)
+                .build();
+        
+        payment.setRefund(refund);
+        
+        assertNotNull(payment.getRefund());
+        assertEquals(payment, refund.getPayment());
     }
 }

@@ -1,13 +1,14 @@
 package com.example.paymentbe.service.strategy;
 
-import org.springframework.stereotype.Service;
+import com.example.paymentbe.dto.PaymentRequest;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 public class BankTransferStrategy implements PaymentStrategy {
     @Override
-    public boolean processPayment(double amount) {
-        // Bank transfer always succeeds in simulation
-        // Real implementation would call bank API
-        return amount > 0;
+    public boolean process(PaymentRequest request) {
+        // Simulasi validasi bank transfer sederhana
+        return request.getBankAccount() != null && 
+               request.getBankAccount().matches("^[0-9]{10,20}$");
     }
 }

@@ -18,6 +18,10 @@ public class PaymentStrategyFactory {
     }
 
     public PaymentStrategy getStrategy(PaymentMethod method) {
-        return strategies.get(method);
+        PaymentStrategy strategy = strategies.get(method);
+        if (strategy == null) {
+            throw new IllegalArgumentException("Invalid payment method");
+        }
+        return strategy;
     }
 }
