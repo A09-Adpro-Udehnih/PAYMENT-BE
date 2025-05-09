@@ -16,16 +16,16 @@ class PaymentTest {
     void testPaymentBuilder() {
         LocalDateTime now = LocalDateTime.now();
         UUID paymentId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID courseId = UUID.randomUUID();
         
         Payment payment = Payment.builder()
                 .id(paymentId)
-                .userId("user123")
-                .courseId("course456")
+                .userId(userId)
+                .courseId(courseId)
                 .amount(100.0)
                 .method(PaymentMethod.CREDIT_CARD)
                 .status(PaymentStatus.PAID)
-                .bankAccount(null)
-                .cardLastFour("1234")
                 .paymentReference("PAY-123456")
                 .createdAt(now)
                 .updatedAt(now)
@@ -33,13 +33,11 @@ class PaymentTest {
 
         assertAll(
             () -> assertEquals(paymentId, payment.getId()),
-            () -> assertEquals("user123", payment.getUserId()),
-            () -> assertEquals("course456", payment.getCourseId()),
+            () -> assertEquals(userId, payment.getUserId()),
+            () -> assertEquals(courseId, payment.getCourseId()),
             () -> assertEquals(100.0, payment.getAmount()),
             () -> assertEquals(PaymentMethod.CREDIT_CARD, payment.getMethod()),
             () -> assertEquals(PaymentStatus.PAID, payment.getStatus()),
-            () -> assertNull(payment.getBankAccount()),
-            () -> assertEquals("1234", payment.getCardLastFour()),
             () -> assertEquals("PAY-123456", payment.getPaymentReference()),
             () -> assertEquals(now, payment.getCreatedAt()),
             () -> assertEquals(now, payment.getUpdatedAt())

@@ -141,8 +141,8 @@ class RefundRepositoryTest {
     // Helper method to create test payments
     private Payment createTestPayment(PaymentStatus status) {
         Payment payment = Payment.builder()
-                .userId(UUID.randomUUID().toString())
-                .courseId(UUID.randomUUID().toString())
+                .userId(UUID.randomUUID())
+                .courseId(UUID.randomUUID())
                 .amount(100.0)
                 .method(PaymentMethod.CREDIT_CARD)
                 .status(status)

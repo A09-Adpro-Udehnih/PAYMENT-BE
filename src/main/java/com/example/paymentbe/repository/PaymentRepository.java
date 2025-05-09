@@ -10,6 +10,6 @@ import java.util.UUID;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, UUID> {
-    List<Payment> findByUserId(String userId);
+    List<Payment> findByUserId(UUID userId);
     List<Payment> findByStatus(PaymentStatus status);
 }

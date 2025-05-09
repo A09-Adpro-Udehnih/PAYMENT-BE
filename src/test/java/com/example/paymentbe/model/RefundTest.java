@@ -15,7 +15,7 @@ public class RefundTest {
         Payment payment = new Payment();
         String reason = "Customer requested refund";
         String processedBy = "admin";
-        LocalDateTime createdAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
 
         // Act
         Refund refund = Refund.builder()
@@ -23,7 +23,8 @@ public class RefundTest {
                 .payment(payment)
                 .reason(reason)
                 .processedBy(processedBy)
-                .createdAt(createdAt)
+                .createdAt(now)
+                .requestedAt(now)
                 .build();
 
         // Assert
@@ -31,7 +32,8 @@ public class RefundTest {
         assertEquals(payment, refund.getPayment());
         assertEquals(reason, refund.getReason());
         assertEquals(processedBy, refund.getProcessedBy());
-        assertEquals(createdAt, refund.getCreatedAt());
+        assertEquals(now, refund.getCreatedAt());
+        assertEquals(now, refund.getRequestedAt());
     }
 
     @Test
@@ -45,6 +47,7 @@ public class RefundTest {
         assertNull(refund.getReason());
         assertNull(refund.getProcessedBy());
         assertNull(refund.getCreatedAt());
+        assertNull(refund.getRequestedAt());
     }
 
     @Test
@@ -54,17 +57,18 @@ public class RefundTest {
         Payment payment = new Payment();
         String reason = "Product damaged";
         String processedBy = "manager";
-        LocalDateTime createdAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
 
         // Act
-        Refund refund = new Refund(refundId, payment, reason, processedBy, createdAt);
+        Refund refund = new Refund(refundId, payment, reason, processedBy, now, now);
 
         // Assert
         assertEquals(refundId, refund.getId());
         assertEquals(payment, refund.getPayment());
         assertEquals(reason, refund.getReason());
         assertEquals(processedBy, refund.getProcessedBy());
-        assertEquals(createdAt, refund.getCreatedAt());
+        assertEquals(now, refund.getCreatedAt());
+        assertEquals(now, refund.getRequestedAt());
     }
 
     @Test
@@ -75,21 +79,23 @@ public class RefundTest {
         Payment payment = new Payment();
         String reason = "Wrong product delivered";
         String processedBy = "support";
-        LocalDateTime createdAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
 
         // Act
         refund.setId(refundId);
         refund.setPayment(payment);
         refund.setReason(reason);
         refund.setProcessedBy(processedBy);
-        refund.setCreatedAt(createdAt);
+        refund.setCreatedAt(now);
+        refund.setRequestedAt(now);
 
         // Assert
         assertEquals(refundId, refund.getId());
         assertEquals(payment, refund.getPayment());
         assertEquals(reason, refund.getReason());
         assertEquals(processedBy, refund.getProcessedBy());
-        assertEquals(createdAt, refund.getCreatedAt());
+        assertEquals(now, refund.getCreatedAt());
+        assertEquals(now, refund.getRequestedAt());
     }
 
     @Test
@@ -97,12 +103,15 @@ public class RefundTest {
         // Arrange
         UUID sharedId = UUID.randomUUID();
         Payment payment = new Payment();
+        LocalDateTime now = LocalDateTime.now();
         
         Refund refund1 = Refund.builder()
                 .id(sharedId)
                 .payment(payment)
                 .reason("Reason 1")
                 .processedBy("admin1")
+                .createdAt(now)
+                .requestedAt(now)
                 .build();
                 
         Refund refund2 = Refund.builder()
@@ -110,6 +119,8 @@ public class RefundTest {
                 .payment(payment)
                 .reason("Reason 1")
                 .processedBy("admin1")
+                .createdAt(now)
+                .requestedAt(now)
                 .build();
                 
         Refund refund3 = Refund.builder()
@@ -117,6 +128,8 @@ public class RefundTest {
                 .payment(payment)
                 .reason("Reason 2")
                 .processedBy("admin2")
+                .createdAt(now)
+                .requestedAt(now)
                 .build();
 
         // Assert
@@ -134,6 +147,7 @@ public class RefundTest {
         payment.setId(UUID.randomUUID());
         String reason = "Test reason";
         String processedBy = "test-admin";
+        LocalDateTime now = LocalDateTime.now();
 
         // Act
         Refund refund = Refund.builder()
@@ -141,6 +155,8 @@ public class RefundTest {
                 .payment(payment)
                 .reason(reason)
                 .processedBy(processedBy)
+                .createdAt(now)
+                .requestedAt(now)
                 .build();
 
         String toStringResult = refund.toString();
@@ -150,6 +166,7 @@ public class RefundTest {
         assertTrue(toStringResult.contains(payment.toString()));
         assertTrue(toStringResult.contains(reason));
         assertTrue(toStringResult.contains(processedBy));
+        assertTrue(toStringResult.contains(now.toString()));
     }
 
     @Test
@@ -158,11 +175,15 @@ public class RefundTest {
         UUID paymentId = UUID.randomUUID();
         Payment payment = new Payment();
         payment.setId(paymentId);
+        LocalDateTime now = LocalDateTime.now();
         
         // Act
         Refund refund = Refund.builder()
                 .payment(payment)
                 .reason("Test payment relationship")
+                .processedBy("system")
+                .createdAt(now)
+                .requestedAt(now)
                 .build();
                 
         // Assert

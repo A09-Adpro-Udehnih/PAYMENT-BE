@@ -5,13 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @Builder
 public class PaymentResponse {
     private String paymentId;
-    private String userId;
-    private String courseId;
+    private UUID userId;
+    private UUID courseId;
     private double amount;
     private String paymentMethod;
     private PaymentStatus status;

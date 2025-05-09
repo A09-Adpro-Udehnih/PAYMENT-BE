@@ -20,10 +20,10 @@ public class Payment {
     private UUID id;
 
     @Column(name = "user_id", nullable = false)
-    private String userId;
+    private UUID userId;
 
     @Column(name = "course_id", nullable = false)
-    private String courseId;
+    private UUID courseId;
 
     @Column(nullable = false)
     private double amount;
@@ -36,17 +36,28 @@ public class Payment {
     @Column(nullable = false)
     private PaymentStatus status;
 
+    @Column(name = "bank_account")
     private String bankAccount;
+
+    @Column(name = "card_last_four")
     private String cardLastFour;
+
+    @Column(name = "payment_reference", nullable = false)
     private String paymentReference;
 
     @CreationTimestamp
-    @Column(updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToOne(mappedBy = "payment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)
     private Refund refund;
+
+    public void addRefund(Refund refund) {
+        refund.setPayment(this);
+        this.refund = refund;
+    }
 }

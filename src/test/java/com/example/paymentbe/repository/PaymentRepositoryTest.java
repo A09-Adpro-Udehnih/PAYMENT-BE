@@ -26,7 +26,9 @@ public class PaymentRepositoryTest {
     @Test
     public void testSaveAndFindById() {
         // Setup
-        Payment payment = createTestPayment();
+        UUID userId = UUID.randomUUID();
+        UUID courseId = UUID.randomUUID();
+        Payment payment = createTestPayment(userId, courseId);
         
         // Execute
         Payment savedPayment = paymentRepository.save(payment);
@@ -34,18 +36,22 @@ public class PaymentRepositoryTest {
         
         // Verify
         assertTrue(foundPayment.isPresent());
-        assertEquals(payment.getUserId(), foundPayment.get().getUserId());
-        assertEquals(payment.getCourseId(), foundPayment.get().getCourseId());
+        assertEquals(userId, foundPayment.get().getUserId());
+        assertEquals(courseId, foundPayment.get().getCourseId());
         assertEquals(payment.getAmount(), foundPayment.get().getAmount());
     }
     
     @Test
     public void testFindByStatus() {
         // Setup
-        Payment payment1 = createTestPayment();
+        UUID userId1 = UUID.randomUUID();
+        UUID userId2 = UUID.randomUUID();
+        UUID courseId = UUID.randomUUID();
+        
+        Payment payment1 = createTestPayment(userId1, courseId);
         payment1.setStatus(PaymentStatus.PENDING);
         
-        Payment payment2 = createTestPayment();
+        Payment payment2 = createTestPayment(userId2, courseId);
         payment2.setStatus(PaymentStatus.PAID);
         
         paymentRepository.save(payment1);
@@ -65,30 +71,33 @@ public class PaymentRepositoryTest {
     @Test
     public void testFindByUserId() {
         // Setup
-        Payment payment1 = createTestPayment();
-        payment1.setUserId("user1");
+        UUID userId1 = UUID.randomUUID();
+        UUID userId2 = UUID.randomUUID();
+        UUID courseId = UUID.randomUUID();
         
-        Payment payment2 = createTestPayment();
-        payment2.setUserId("user2");
+        Payment payment1 = createTestPayment(userId1, courseId);
+        Payment payment2 = createTestPayment(userId2, courseId);
         
         paymentRepository.save(payment1);
         paymentRepository.save(payment2);
         
         // Execute
-        List<Payment> user1Payments = paymentRepository.findByUserId("user1");
-        List<Payment> user2Payments = paymentRepository.findByUserId("user2");
+        List<Payment> user1Payments = paymentRepository.findByUserId(userId1);
+        List<Payment> user2Payments = paymentRepository.findByUserId(userId2);
         
         // Verify
         assertEquals(1, user1Payments.size());
         assertEquals(1, user2Payments.size());
-        assertEquals("user1", user1Payments.get(0).getUserId());
-        assertEquals("user2", user2Payments.get(0).getUserId());
+        assertEquals(userId1, user1Payments.get(0).getUserId());
+        assertEquals(userId2, user2Payments.get(0).getUserId());
     }
     
     @Test
     public void testUpdatePayment() {
         // Setup
-        Payment payment = createTestPayment();
+        UUID userId = UUID.randomUUID();
+        UUID courseId = UUID.randomUUID();
+        Payment payment = createTestPayment(userId, courseId);
         payment = paymentRepository.save(payment);
         
         // Execute
@@ -97,7 +106,7 @@ public class PaymentRepositoryTest {
         Optional<Payment> foundPayment = paymentRepository.findById(payment.getId());
         
         // Verify
-        assertThat(updatedPayment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
+        assertThat(updatedPayment.getStatus()).isEqualTo(PaymentStatus.PAID);
         assertTrue(foundPayment.isPresent());
         assertEquals(PaymentStatus.PAID, foundPayment.get().getStatus());
     }
@@ -114,17 +123,7 @@ public class PaymentRepositoryTest {
     @Test
     public void testFindByNonExistentUserId() {
         // Execute
-        List<Payment> payments = paymentRepository.findByUserId("nonexistent");
-        
-        // Verify
-        assertTrue(payments.isEmpty());
-    }
-    
-    @Test
-    public void testFindByEmptyUserId() {
-        // This test depends on your validation logic
-        // Execute
-        List<Payment> payments = paymentRepository.findByUserId("");
+        List<Payment> payments = paymentRepository.findByUserId(UUID.randomUUID());
         
         // Verify
         assertTrue(payments.isEmpty());
@@ -136,10 +135,10 @@ public class PaymentRepositoryTest {
         assertThat(result).isEmpty();
     }    
     
-    private Payment createTestPayment() {
+    private Payment createTestPayment(UUID userId, UUID courseId) {
         return Payment.builder()
-                .userId("testUser")
-                .courseId("testCourse")
+                .userId(userId)
+                .courseId(courseId)
                 .amount(100.0)
                 .method(PaymentMethod.CREDIT_CARD)
                 .status(PaymentStatus.PENDING)

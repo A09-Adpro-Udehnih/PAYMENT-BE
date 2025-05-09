@@ -44,9 +44,14 @@ public class PaymentServiceImpl implements PaymentService {
             throw new IllegalArgumentException("Payment ID cannot be null or empty");
         }
         
-        Payment payment = paymentRepository.findById(UUID.fromString(paymentId))
-                .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + paymentId));
-        return buildPaymentResponse(payment);
+        try {
+            UUID paymentUUID = UUID.fromString(paymentId);
+            Payment payment = paymentRepository.findById(paymentUUID)
+                    .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + paymentId));
+            return buildPaymentResponse(payment);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid payment ID format");
+        }
     }
 
     @Override
@@ -55,9 +60,14 @@ public class PaymentServiceImpl implements PaymentService {
             throw new IllegalArgumentException("User ID cannot be null or empty");
         }
         
-        return paymentRepository.findByUserId(userId).stream()
-                .map(this::buildPaymentResponse)
-                .collect(Collectors.toList());
+        try {
+            UUID userUUID = UUID.fromString(userId);
+            return paymentRepository.findByUserId(userUUID).stream()
+                    .map(this::buildPaymentResponse)
+                    .collect(Collectors.toList());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid user ID format");
+        }
     }
 
     @Override
@@ -70,25 +80,29 @@ public class PaymentServiceImpl implements PaymentService {
             throw new IllegalArgumentException("Refund request cannot be null");
         }
 
-        UUID paymentUUID = UUID.fromString(paymentId);
-        Payment payment = paymentRepository.findById(paymentUUID)
-                .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + paymentId));
+        try {
+            UUID paymentUUID = UUID.fromString(paymentId);
+            Payment payment = paymentRepository.findById(paymentUUID)
+                    .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + paymentId));
 
-        if (payment.getStatus() != PaymentStatus.PAID) {
-            throw new IllegalStateException("Only PAID payments can be refunded");
+            if (payment.getStatus() != PaymentStatus.PAID) {
+                throw new IllegalStateException("Only PAID payments can be refunded");
+            }
+
+            payment.setStatus(PaymentStatus.REFUND_REQUESTED);
+            paymentRepository.save(payment);
+            
+            Refund refund = Refund.builder()
+                    .payment(payment)
+                    .reason(request.getReason())
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            refundRepository.save(refund);
+            
+            return buildPaymentResponse(payment);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid payment ID format");
         }
-
-        payment.setStatus(PaymentStatus.REFUND_REQUESTED);
-        paymentRepository.save(payment);
-        
-        Refund refund = Refund.builder()
-                .payment(payment)  // Diubah dari paymentId ke payment
-                .reason(request.getReason())
-                .createdAt(LocalDateTime.now())
-                .build();
-        refundRepository.save(refund);
-        
-        return buildPaymentResponse(payment);
     }
 
     @Override
@@ -115,21 +129,28 @@ public class PaymentServiceImpl implements PaymentService {
             throw new IllegalArgumentException("Status cannot be null or empty");
         }
 
-        Payment payment = paymentRepository.findById(UUID.fromString(paymentId))
-                .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + paymentId));
-
         try {
+            UUID paymentUUID = UUID.fromString(paymentId);
+            Payment payment = paymentRepository.findById(paymentUUID)
+                    .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + paymentId));
+
             PaymentStatus newStatus = PaymentStatus.valueOf(status.toUpperCase());
             payment.setStatus(newStatus);
             paymentRepository.save(payment);
+            
+            return buildPaymentResponse(payment);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid payment status: " + status);
+            throw new IllegalArgumentException("Invalid payment ID or status format");
         }
-        
-        return buildPaymentResponse(payment);
     }
 
     private void validatePaymentRequest(PaymentRequest request) {
+        if (request.getUserId() == null) {
+            throw new IllegalArgumentException("User ID is required");
+        }
+        if (request.getCourseId() == null) {
+            throw new IllegalArgumentException("Course ID is required");
+        }
         if (request.getMethod() == null) {
             throw new IllegalArgumentException("Payment method is required");
         }
@@ -152,9 +173,9 @@ public class PaymentServiceImpl implements PaymentService {
         if (request.getMethod() == PaymentMethod.CREDIT_CARD && request.getCardNumber() != null) {
             cardLastFour = request.getCardNumber().substring(Math.max(0, request.getCardNumber().length() - 4));
         }
-
+    
         PaymentStatus status = determinePaymentStatus(request.getMethod(), isSuccess);
-
+    
         return Payment.builder()
                 .userId(request.getUserId())
                 .courseId(request.getCourseId())
@@ -174,7 +195,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private PaymentResponse buildPaymentResponse(Payment payment) {
-        PaymentResponse.PaymentResponseBuilder builder = PaymentResponse.builder()
+        return PaymentResponse.builder()
                 .paymentId(payment.getId().toString())
                 .userId(payment.getUserId())
                 .courseId(payment.getCourseId())
@@ -182,17 +203,9 @@ public class PaymentServiceImpl implements PaymentService {
                 .paymentMethod(payment.getMethod().name())
                 .status(payment.getStatus())
                 .paymentReference(payment.getPaymentReference())
-                .createdAt(payment.getCreatedAt());
-        
-        if (payment.getUpdatedAt() != null) {
-            builder.updatedAt(payment.getUpdatedAt());
-        }
-        
-        // Tambahkan informasi refund jika ada
-        if (payment.getRefund() != null) {
-            builder.refundReason(payment.getRefund().getReason());
-        }
-        
-        return builder.build();
+                .createdAt(payment.getCreatedAt())
+                .updatedAt(payment.getUpdatedAt())
+                .refundReason(payment.getRefund() != null ? payment.getRefund().getReason() : null)
+                .build();
     }
 }

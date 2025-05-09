@@ -46,18 +46,23 @@ public class PaymentServiceImplTest {
     @InjectMocks
     private PaymentServiceImpl paymentService;
 
-    private Payment testPayment;
     private UUID testPaymentId;
+    private UUID testUserId;
+    private UUID testCourseId;
+    private Payment testPayment;
     private PaymentRequest testPaymentRequest;
     private RefundRequest testRefundRequest;
 
     @BeforeEach
     void setUp() {
         testPaymentId = UUID.randomUUID();
+        testUserId = UUID.randomUUID();
+        testCourseId = UUID.randomUUID();
+
         testPayment = Payment.builder()
                 .id(testPaymentId)
-                .userId("user123")
-                .courseId("course123")
+                .userId(testUserId)
+                .courseId(testCourseId)
                 .amount(100.0)
                 .method(PaymentMethod.CREDIT_CARD)
                 .status(PaymentStatus.PAID)
@@ -68,8 +73,8 @@ public class PaymentServiceImplTest {
                 .build();
 
         testPaymentRequest = new PaymentRequest();
-        testPaymentRequest.setUserId("user123");
-        testPaymentRequest.setCourseId("course123");
+        testPaymentRequest.setUserId(testUserId);
+        testPaymentRequest.setCourseId(testCourseId);
         testPaymentRequest.setAmount(100.0);
         testPaymentRequest.setMethod(PaymentMethod.CREDIT_CARD);
         testPaymentRequest.setCardNumber("4111111111111111");
@@ -110,8 +115,8 @@ public class PaymentServiceImplTest {
     void getPendingPayments_Success() {
         Payment pendingPayment = Payment.builder()
                 .id(UUID.randomUUID())
-                .userId("user456")
-                .courseId("course456")
+                .userId(UUID.randomUUID())
+                .courseId(UUID.randomUUID())
                 .amount(200.0)
                 .method(PaymentMethod.BANK_TRANSFER)
                 .status(PaymentStatus.PENDING)
@@ -133,8 +138,8 @@ public class PaymentServiceImplTest {
     void getRefundRequests_Success() {
         Payment refundRequestedPayment = Payment.builder()
                 .id(UUID.randomUUID())
-                .userId("user789")
-                .courseId("course789")
+                .userId(UUID.randomUUID())
+                .courseId(UUID.randomUUID())
                 .amount(300.0)
                 .method(PaymentMethod.CREDIT_CARD)
                 .status(PaymentStatus.REFUND_REQUESTED)

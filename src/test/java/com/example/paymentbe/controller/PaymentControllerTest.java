@@ -38,6 +38,8 @@ class PaymentControllerTest {
     private PaymentRequest validRequest;
     private PaymentResponse successResponse;
     private UUID testPaymentId;
+    private UUID testUserId;
+    private UUID testCourseId;
 
     @BeforeEach
     void setUp() {
@@ -45,8 +47,8 @@ class PaymentControllerTest {
         testPaymentId = UUID.randomUUID();
 
         validRequest = new PaymentRequest();
-        validRequest.setUserId("user123");
-        validRequest.setCourseId("course456");
+        validRequest.setUserId(testUserId);
+        validRequest.setCourseId(testCourseId);
         validRequest.setAmount(100.0);
         validRequest.setMethod(PaymentMethod.CREDIT_CARD);
         validRequest.setCardNumber("4111111111111111");

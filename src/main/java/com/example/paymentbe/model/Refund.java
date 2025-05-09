@@ -18,7 +18,7 @@ public class Refund {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_id", nullable = false)
     private Payment payment;
 
@@ -29,6 +29,9 @@ public class Refund {
     private String processedBy;
 
     @CreationTimestamp
-    @Column(updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "requested_at")
+    private LocalDateTime requestedAt;
 }

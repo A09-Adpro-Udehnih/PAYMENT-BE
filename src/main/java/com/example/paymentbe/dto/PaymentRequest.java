@@ -1,16 +1,18 @@
 package com.example.paymentbe.dto;
 
+import java.util.UUID;
 import com.example.paymentbe.model.PaymentMethod;
+
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
 public class PaymentRequest {
     @NotBlank(message = "User ID is required")
-    private String userId;
+    private UUID userId;
 
     @NotBlank(message = "Course ID is required")
-    private String courseId;
+    private UUID courseId;
 
     @Positive(message = "Amount must be positive")
     private double amount;
