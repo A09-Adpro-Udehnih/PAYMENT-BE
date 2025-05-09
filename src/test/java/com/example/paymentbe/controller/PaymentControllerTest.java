@@ -1,31 +1,33 @@
 package com.example.paymentbe.controller;
 
-import com.example.paymentbe.dto.PaymentRequest;
-import com.example.paymentbe.dto.PaymentResponse;
-import com.example.paymentbe.model.PaymentMethod;
-import com.example.paymentbe.model.PaymentStatus;
+import com.example.paymentbe.dto.*;
+import com.example.paymentbe.model.*;
 import com.example.paymentbe.service.PaymentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@ExtendWith(MockitoExtension.class)
 class PaymentControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock
     private PaymentService paymentService;
@@ -33,32 +35,128 @@ class PaymentControllerTest {
     @InjectMocks
     private PaymentController paymentController;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private PaymentRequest validRequest;
+    private PaymentResponse successResponse;
+    private UUID testPaymentId;
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(paymentController).build();
+        testPaymentId = UUID.randomUUID();
+
+        validRequest = new PaymentRequest();
+        validRequest.setUserId("user123");
+        validRequest.setCourseId("course456");
+        validRequest.setAmount(100.0);
+        validRequest.setMethod(PaymentMethod.CREDIT_CARD);
+        validRequest.setCardNumber("4111111111111111");
+        validRequest.setCardCvc("123");
+
+        successResponse = PaymentResponse.builder()
+                .paymentId(testPaymentId.toString())
+                .status(PaymentStatus.PAID)
+                .paymentReference("PAY-123456")
+                .build();
+    }
 
     @Test
-    void createPayment_ShouldReturnCreated() throws Exception {
-        PaymentRequest request = new PaymentRequest();
-        request.setUserId("user1");
-        request.setCourseId("course1");
-        request.setCourseName("Course 1");
-        request.setTutorName("Tutor 1");
-        request.setAmount(100.0);
-        request.setMethod(PaymentMethod.CREDIT_CARD);
-
-        PaymentResponse response = PaymentResponse.builder()
-                .paymentId("123")
-                .status(PaymentStatus.PAID)
-                .message("Payment successful")
-                .build();
-
-        when(paymentService.processPayment(any())).thenReturn(response);
+    void createPayment_Success() throws Exception {
+        when(paymentService.processPayment(any(PaymentRequest.class))).thenReturn(successResponse);
 
         mockMvc.perform(post("/api/payments")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("PAID"))
-                .andExpect(jsonPath("$.message").value("Payment successful"));
+                .andExpect(jsonPath("$.paymentId").value(testPaymentId.toString()))
+                .andExpect(jsonPath("$.status").value("PAID"));
+
+        verify(paymentService).processPayment(any(PaymentRequest.class));
+    }
+
+    @Test
+    void createPayment_ValidationFailed() throws Exception {
+        PaymentRequest invalidRequest = new PaymentRequest(); // Missing required fields
+
+        mockMvc.perform(post("/api/payments")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest());
+
+        verify(paymentService, never()).processPayment(any());
+    }
+
+    @Test
+    void getPayment_Success() throws Exception {
+        when(paymentService.getPayment(testPaymentId.toString())).thenReturn(successResponse);
+
+        mockMvc.perform(get("/api/payments/{paymentId}", testPaymentId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paymentId").value(testPaymentId.toString()));
+
+        verify(paymentService).getPayment(testPaymentId.toString());
+    }
+
+    @Test
+    void getPayment_NotFound() throws Exception {
+        when(paymentService.getPayment(anyString())).thenThrow(new RuntimeException("Payment not found"));
+
+        mockMvc.perform(get("/api/payments/{paymentId}", "nonexistent"))
+                .andExpect(status().isNotFound());
+
+        verify(paymentService).getPayment("nonexistent");
+    }
+
+    @Test
+    void requestRefund_Success() throws Exception {
+        RefundRequest refundRequest = new RefundRequest();
+        refundRequest.setReason("Test reason");
+
+        PaymentResponse refundResponse = PaymentResponse.builder()
+                .paymentId(testPaymentId.toString())
+                .status(PaymentStatus.REFUNDED)
+                .build();
+
+        when(paymentService.requestRefund(eq(testPaymentId.toString()), any(RefundRequest.class)))
+                .thenReturn(refundResponse);
+
+        mockMvc.perform(post("/api/payments/{paymentId}/refund", testPaymentId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refundRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("REFUNDED"));
+
+        verify(paymentService).requestRefund(eq(testPaymentId.toString()), any(RefundRequest.class));
+    }
+
+    @Test
+    void requestRefund_InvalidPayment() throws Exception {
+        RefundRequest refundRequest = new RefundRequest();
+        refundRequest.setReason("Test reason");
+
+        when(paymentService.requestRefund(anyString(), any(RefundRequest.class)))
+                .thenThrow(new RuntimeException("Only PAID payments can be refunded"));
+
+        mockMvc.perform(post("/api/payments/{paymentId}/refund", testPaymentId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refundRequest)))
+                .andExpect(status().isBadRequest());
+
+        verify(paymentService).requestRefund(eq(testPaymentId.toString()), any(RefundRequest.class));
+    }
+
+    @Test
+    void getUserPayments_Success() throws Exception {
+        List<PaymentResponse> payments = Arrays.asList(
+                PaymentResponse.builder().paymentId("1").build(),
+                PaymentResponse.builder().paymentId("2").build()
+        );
+
+        when(paymentService.getUserPayments("user123")).thenReturn(payments);
+
+        mockMvc.perform(get("/api/payments/user/{userId}", "user123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+
+        verify(paymentService).getUserPayments("user123");
     }
 }
