@@ -1,7 +1,9 @@
 package com.example.paymentbe.service.strategy;
 
 import com.example.paymentbe.dto.PaymentRequest;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CreditCardStrategy implements PaymentStrategy {
     @Override
     public boolean process(PaymentRequest request) {
