@@ -8,6 +8,8 @@ public class MigrationManager {
                 .dataSource(DatabaseConnection.getDataSource())
                 .locations("classpath:db/migration")
                 .load();
+
+        flyway.repair();        
         flyway.migrate();
     }
 }
