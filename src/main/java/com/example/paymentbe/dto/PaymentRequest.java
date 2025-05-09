@@ -12,14 +12,13 @@ public class PaymentRequest {
     @NotBlank(message = "Course ID is required")
     private String courseId;
 
-    @NotBlank(message = "Course name is required")
-    private String courseName;
-
-    @NotBlank(message = "Tutor name is required")
-    private String tutorName;
-
     @Positive(message = "Amount must be positive")
     private double amount;
 
+    @NotNull(message = "Payment method is required")
     private PaymentMethod method;
+
+    private String bankAccount; // Required for BANK_TRANSFER
+    private String cardNumber;  // Required for CREDIT_CARD
+    private String cardCvc;     // Required for CREDIT_CARD
 }
