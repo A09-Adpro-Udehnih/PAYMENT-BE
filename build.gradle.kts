@@ -52,6 +52,19 @@ tasks.jacocoTestReport {
     dependsOn(tasks.test)
 }
 
-tasks.withType<Test>().configureEach {
+tasks.withType<Test>() {
     useJUnitPlatform()
+}
+
+tasks.register("migrate") {
+    group = "database"
+    description = "Run database migrations"
+    dependsOn("compileJava")
+    doLast {
+        project.javaexec {
+            mainClass.set("com.example.paymentbe.MigrationManager")
+            classpath = sourceSets["main"].runtimeClasspath
+            environment.putAll(System.getenv())
+        }
+    }
 }
