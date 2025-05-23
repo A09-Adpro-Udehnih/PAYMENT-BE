@@ -3,6 +3,7 @@ plugins {
 	jacoco
 	id("org.springframework.boot") version "3.4.4"
 	id("io.spring.dependency-management") version "1.1.7"
+	id("org.flywaydb.flyway") version "10.20.1"  // Add Flyway plugin
 }
 
 group = "com.example"
@@ -34,6 +35,7 @@ dependencies {
 	implementation("org.flywaydb:flyway-core")
 	implementation("org.flywaydb:flyway-database-postgresql")
 	implementation("com.zaxxer:HikariCP:5.1.0")
+	implementation("io.github.cdimascio:dotenv-java:3.0.0")
     compileOnly("org.projectlombok:lombok:1.18.38")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	runtimeOnly("org.postgresql:postgresql")
@@ -67,4 +69,20 @@ tasks.register("migrate") {
             environment.putAll(System.getenv())
         }
     }
+}
+
+// Flyway configuration
+flyway {
+// Use environment variables only, no fallback hardcoded values
+url = System.getenv("DATABASE_URL")
+user = System.getenv("DATABASE_USERNAME")
+password = System.getenv("DATABASE_PASSWORD")
+schemas = arrayOf("public")
+locations = arrayOf("classpath:db/migration")
+
+// Development settings
+validateOnMigrate = false
+cleanDisabled = false
+baselineOnMigrate = true
+outOfOrder = true
 }

@@ -8,8 +8,12 @@ public class MigrationManager {
                 .dataSource(DatabaseConnection.getDataSource())
                 .locations("classpath:db/migration")
                 .load();
-
-        flyway.repair();        
         flyway.migrate();
+    }
+
+    public static void main(String[] args) {
+        System.out.println("☕ Running database migrations...");
+        migrate();
+        System.out.println("✅ Migrations completed successfully!");
     }
 }
