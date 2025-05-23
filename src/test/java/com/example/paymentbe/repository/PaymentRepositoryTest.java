@@ -1,154 +1,237 @@
-// package com.example.paymentbe.repository;
+package com.example.paymentbe.repository;
 
-// import com.example.paymentbe.model.Payment;
-// import com.example.paymentbe.model.PaymentMethod;
-// import com.example.paymentbe.model.PaymentStatus;
-// import org.junit.jupiter.api.Test;
-// import org.springframework.beans.factory.annotation.Autowired;
-// import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-// import org.springframework.test.context.ActiveProfiles;
-// import org.springframework.test.context.TestPropertySource;
+import com.example.paymentbe.model.Payment;
+import com.example.paymentbe.enums.PaymentMethod;
+import com.example.paymentbe.enums.PaymentStatus;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-// import java.time.LocalDateTime;
-// import java.util.List;
-// import java.util.Optional;
-// import java.util.UUID;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.Collections;
 
-// import static org.assertj.core.api.Assertions.*;
-// import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-// @DataJpaTest
-// @TestPropertySource(properties = {
-//         "spring.jpa.hibernate.ddl-auto=create-drop"
-// })
-// @ActiveProfiles("test")
-// public class PaymentRepositoryTest {
+@ExtendWith(MockitoExtension.class)
+public class PaymentRepositoryTest {
 
-//     @Autowired
-//     private PaymentRepository paymentRepository;
+    @Mock
+    private PaymentRepository paymentRepository;
 
-//     @Test
-//     public void testSaveAndFindById() {
-//         // Setup
-//         UUID userId = UUID.randomUUID();
-//         UUID courseId = UUID.randomUUID();
-//         Payment payment = createTestPayment(userId, courseId);
+    private Payment testPayment;
+    private UUID testUserId;
+    private UUID testCourseId;
+    private UUID testPaymentId;
+
+    @BeforeEach
+    void setUp() {
+        testUserId = UUID.randomUUID();
+        testCourseId = UUID.randomUUID();
+        testPaymentId = UUID.randomUUID();
+        testPayment = createTestPayment(testUserId, testCourseId);
+        testPayment.setId(testPaymentId);
+    }
+
+    @Test
+    public void testSaveAndFindById() {
+        // Given
+        when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
+        when(paymentRepository.findById(testPaymentId)).thenReturn(Optional.of(testPayment));
+
+        // When
+        Payment savedPayment = paymentRepository.save(testPayment);
+        Optional<Payment> foundPayment = paymentRepository.findById(testPaymentId);
+
+        // Then
+        assertThat(savedPayment).isNotNull();
+        assertThat(foundPayment).isPresent();
+        assertThat(foundPayment.get().getId()).isEqualTo(testPaymentId);
+        assertThat(foundPayment.get().getUserId()).isEqualTo(testUserId);
+        assertThat(foundPayment.get().getCourseId()).isEqualTo(testCourseId);
         
-//         // Execute
-//         Payment savedPayment = paymentRepository.save(payment);
-//         Optional<Payment> foundPayment = paymentRepository.findById(savedPayment.getId());
+        verify(paymentRepository).save(any(Payment.class));
+        verify(paymentRepository).findById(testPaymentId);
+    }
+
+    @Test
+    public void testFindByStatus() {
+        // Given
+        Payment pendingPayment = createTestPayment(testUserId, testCourseId);
+        pendingPayment.setStatus(PaymentStatus.PENDING);
         
-//         // Verify
-//         assertTrue(foundPayment.isPresent());
-//         assertEquals(userId, foundPayment.get().getUserId());
-//         assertEquals(courseId, foundPayment.get().getCourseId());
-//         assertEquals(payment.getAmount(), foundPayment.get().getAmount());
-//     }
-    
-//     @Test
-//     public void testFindByStatus() {
-//         // Setup
-//         UUID userId1 = UUID.randomUUID();
-//         UUID userId2 = UUID.randomUUID();
-//         UUID courseId = UUID.randomUUID();
+        Payment paidPayment = createTestPayment(UUID.randomUUID(), testCourseId);
+        paidPayment.setStatus(PaymentStatus.PAID);
+
+        when(paymentRepository.findByStatus(PaymentStatus.PENDING))
+                .thenReturn(List.of(pendingPayment));
+        when(paymentRepository.findByStatus(PaymentStatus.PAID))
+                .thenReturn(List.of(paidPayment));
+
+        // When
+        List<Payment> pendingPayments = paymentRepository.findByStatus(PaymentStatus.PENDING);
+        List<Payment> paidPayments = paymentRepository.findByStatus(PaymentStatus.PAID);
+
+        // Then
+        assertThat(pendingPayments).hasSize(1);
+        assertThat(paidPayments).hasSize(1);
+        assertThat(pendingPayments.get(0).getStatus()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(paidPayments.get(0).getStatus()).isEqualTo(PaymentStatus.PAID);
         
-//         Payment payment1 = createTestPayment(userId1, courseId);
-//         payment1.setStatus(PaymentStatus.PENDING);
+        verify(paymentRepository).findByStatus(PaymentStatus.PENDING);
+        verify(paymentRepository).findByStatus(PaymentStatus.PAID);
+    }
+
+    @Test
+    public void testFindByUserId() {
+        // Given
+        UUID userId1 = UUID.randomUUID();
+        UUID userId2 = UUID.randomUUID();
         
-//         Payment payment2 = createTestPayment(userId2, courseId);
-//         payment2.setStatus(PaymentStatus.PAID);
+        Payment payment1 = createTestPayment(userId1, testCourseId);
+        Payment payment2 = createTestPayment(userId2, testCourseId);
+
+        when(paymentRepository.findByUserId(userId1)).thenReturn(List.of(payment1));
+        when(paymentRepository.findByUserId(userId2)).thenReturn(List.of(payment2));
+
+        // When
+        List<Payment> user1Payments = paymentRepository.findByUserId(userId1);
+        List<Payment> user2Payments = paymentRepository.findByUserId(userId2);
+
+        // Then
+        assertThat(user1Payments).hasSize(1);
+        assertThat(user2Payments).hasSize(1);
+        assertThat(user1Payments.get(0).getUserId()).isEqualTo(userId1);
+        assertThat(user2Payments.get(0).getUserId()).isEqualTo(userId2);
         
-//         paymentRepository.save(payment1);
-//         paymentRepository.save(payment2);
+        verify(paymentRepository).findByUserId(userId1);
+        verify(paymentRepository).findByUserId(userId2);
+    }
+
+    @Test
+    public void testUpdatePayment() {
+        // Given
+        Payment originalPayment = createTestPayment(testUserId, testCourseId);
+        originalPayment.setId(testPaymentId);
+        originalPayment.setStatus(PaymentStatus.PENDING);
+
+        Payment updatedPayment = createTestPayment(testUserId, testCourseId);
+        updatedPayment.setId(testPaymentId);
+        updatedPayment.setStatus(PaymentStatus.PAID);
+
+        when(paymentRepository.save(any(Payment.class))).thenReturn(updatedPayment);
+        when(paymentRepository.findById(testPaymentId)).thenReturn(Optional.of(updatedPayment));
+
+        // When
+        Payment savedPayment = paymentRepository.save(updatedPayment);
+        Optional<Payment> foundPayment = paymentRepository.findById(testPaymentId);
+
+        // Then
+        assertThat(savedPayment.getStatus()).isEqualTo(PaymentStatus.PAID);
+        assertThat(foundPayment).isPresent();
+        assertThat(foundPayment.get().getStatus()).isEqualTo(PaymentStatus.PAID);
         
-//         // Execute
-//         List<Payment> pendingPayments = paymentRepository.findByStatus(PaymentStatus.PENDING);
-//         List<Payment> paidPayments = paymentRepository.findByStatus(PaymentStatus.PAID);
+        verify(paymentRepository).save(any(Payment.class));
+        verify(paymentRepository).findById(testPaymentId);
+    }
+
+    @Test
+    public void testFindNonExistentPayment() {
+        // Given
+        UUID nonExistentId = UUID.randomUUID();
+        when(paymentRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        // When
+        Optional<Payment> payment = paymentRepository.findById(nonExistentId);
+
+        // Then
+        assertThat(payment).isEmpty();
+        verify(paymentRepository).findById(nonExistentId);
+    }
+
+    @Test
+    public void testFindByNonExistentUserId() {
+        // Given
+        UUID nonExistentUserId = UUID.randomUUID();
+        when(paymentRepository.findByUserId(nonExistentUserId)).thenReturn(Collections.emptyList());
+
+        // When
+        List<Payment> payments = paymentRepository.findByUserId(nonExistentUserId);
+
+        // Then
+        assertThat(payments).isEmpty();
+        verify(paymentRepository).findByUserId(nonExistentUserId);
+    }
+
+    @Test
+    void testFindByNullStatus_returnsEmpty() {
+        // Given
+        when(paymentRepository.findByStatus(null)).thenReturn(Collections.emptyList());
+
+        // When
+        List<Payment> result = paymentRepository.findByStatus(null);
+
+        // Then
+        assertThat(result).isEmpty();
+        verify(paymentRepository).findByStatus(null);
+    }
+
+    @Test
+    void testSaveMultiplePayments() {
+        // Given
+        Payment payment1 = createTestPayment(UUID.randomUUID(), testCourseId);
+        Payment payment2 = createTestPayment(UUID.randomUUID(), testCourseId);
         
-//         // Verify
-//         assertEquals(1, pendingPayments.size());
-//         assertEquals(1, paidPayments.size());
-//         assertEquals(PaymentStatus.PENDING, pendingPayments.get(0).getStatus());
-//         assertEquals(PaymentStatus.PAID, paidPayments.get(0).getStatus());
-//     }
-    
-//     @Test
-//     public void testFindByUserId() {
-//         // Setup
-//         UUID userId1 = UUID.randomUUID();
-//         UUID userId2 = UUID.randomUUID();
-//         UUID courseId = UUID.randomUUID();
+        when(paymentRepository.save(payment1)).thenReturn(payment1);
+        when(paymentRepository.save(payment2)).thenReturn(payment2);
+
+        // When
+        Payment saved1 = paymentRepository.save(payment1);
+        Payment saved2 = paymentRepository.save(payment2);
+
+        // Then
+        assertThat(saved1).isEqualTo(payment1);
+        assertThat(saved2).isEqualTo(payment2);
         
-//         Payment payment1 = createTestPayment(userId1, courseId);
-//         Payment payment2 = createTestPayment(userId2, courseId);
+        verify(paymentRepository, times(2)).save(any(Payment.class));
+    }
+
+    @Test
+    void testFindByStatusWithMultipleResults() {
+        // Given
+        Payment payment1 = createTestPayment(UUID.randomUUID(), testCourseId);
+        Payment payment2 = createTestPayment(UUID.randomUUID(), testCourseId);
+        payment1.setStatus(PaymentStatus.PENDING);
+        payment2.setStatus(PaymentStatus.PENDING);
         
-//         paymentRepository.save(payment1);
-//         paymentRepository.save(payment2);
-        
-//         // Execute
-//         List<Payment> user1Payments = paymentRepository.findByUserId(userId1);
-//         List<Payment> user2Payments = paymentRepository.findByUserId(userId2);
-        
-//         // Verify
-//         assertEquals(1, user1Payments.size());
-//         assertEquals(1, user2Payments.size());
-//         assertEquals(userId1, user1Payments.get(0).getUserId());
-//         assertEquals(userId2, user2Payments.get(0).getUserId());
-//     }
-    
-//     @Test
-//     public void testUpdatePayment() {
-//         // Setup
-//         UUID userId = UUID.randomUUID();
-//         UUID courseId = UUID.randomUUID();
-//         Payment payment = createTestPayment(userId, courseId);
-//         payment = paymentRepository.save(payment);
-        
-//         // Execute
-//         payment.setStatus(PaymentStatus.PAID);
-//         Payment updatedPayment = paymentRepository.save(payment);
-//         Optional<Payment> foundPayment = paymentRepository.findById(payment.getId());
-        
-//         // Verify
-//         assertThat(updatedPayment.getStatus()).isEqualTo(PaymentStatus.PAID);
-//         assertTrue(foundPayment.isPresent());
-//         assertEquals(PaymentStatus.PAID, foundPayment.get().getStatus());
-//     }
-    
-//     @Test
-//     public void testFindNonExistentPayment() {
-//         // Execute
-//         Optional<Payment> payment = paymentRepository.findById(UUID.randomUUID());
-        
-//         // Verify
-//         assertFalse(payment.isPresent());
-//     }
-    
-//     @Test
-//     public void testFindByNonExistentUserId() {
-//         // Execute
-//         List<Payment> payments = paymentRepository.findByUserId(UUID.randomUUID());
-        
-//         // Verify
-//         assertTrue(payments.isEmpty());
-//     }
-    
-//     @Test
-//     void testFindByNullStatus_returnsEmpty() {
-//         var result = paymentRepository.findByStatus(null);
-//         assertThat(result).isEmpty();
-//     }    
-    
-//     private Payment createTestPayment(UUID userId, UUID courseId) {
-//         return Payment.builder()
-//                 .userId(userId)
-//                 .courseId(courseId)
-//                 .amount(100.0)
-//                 .method(PaymentMethod.CREDIT_CARD)
-//                 .status(PaymentStatus.PENDING)
-//                 .cardLastFour("1234")
-//                 .paymentReference("TEST-REF")
-//                 .createdAt(LocalDateTime.now())
-//                 .build();
-//     }
-// }
+        List<Payment> pendingPayments = List.of(payment1, payment2);
+        when(paymentRepository.findByStatus(PaymentStatus.PENDING)).thenReturn(pendingPayments);
+
+        // When
+        List<Payment> result = paymentRepository.findByStatus(PaymentStatus.PENDING);
+
+        // Then
+        assertThat(result).hasSize(2);
+        assertThat(result).containsExactly(payment1, payment2);
+        verify(paymentRepository).findByStatus(PaymentStatus.PENDING);
+    }
+
+    private Payment createTestPayment(UUID userId, UUID courseId) {
+        return Payment.builder()
+                .userId(userId)
+                .courseId(courseId)
+                .amount(100.0)
+                .method(PaymentMethod.CREDIT_CARD)
+                .status(PaymentStatus.PENDING)
+                .cardLastFour("1234")
+                .paymentReference("TEST-REF")
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+}
