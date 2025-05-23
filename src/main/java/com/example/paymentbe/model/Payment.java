@@ -1,5 +1,7 @@
 package com.example.paymentbe.model;
 
+import com.example.paymentbe.enums.PaymentMethod;
+import com.example.paymentbe.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

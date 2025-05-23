@@ -1,7 +1,7 @@
 package com.example.paymentbe.repository;
 
 import com.example.paymentbe.model.Payment;
-import com.example.paymentbe.model.PaymentStatus;
+import com.example.paymentbe.enums.PaymentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

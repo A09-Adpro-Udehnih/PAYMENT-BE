@@ -19,7 +19,8 @@ public class Refund {
     private UUID id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_id", nullable = false)
+    @JoinColumn(name = "payment_id")
+    @MapsId
     private Payment payment;
 
     @Column(nullable = false, length = 500)

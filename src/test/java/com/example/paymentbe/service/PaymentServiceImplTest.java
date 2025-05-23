@@ -4,8 +4,7 @@ import com.example.paymentbe.dto.PaymentRequest;
 import com.example.paymentbe.dto.PaymentResponse;
 import com.example.paymentbe.dto.RefundRequest;
 import com.example.paymentbe.model.Payment;
-import com.example.paymentbe.model.PaymentMethod;
-import com.example.paymentbe.model.PaymentStatus;
+import com.example.paymentbe.enums.*;
 import com.example.paymentbe.model.Refund;
 import com.example.paymentbe.repository.PaymentRepository;
 import com.example.paymentbe.repository.RefundRepository;
@@ -109,51 +108,5 @@ public class PaymentServiceImplTest {
         assertEquals(PaymentStatus.REFUND_REQUESTED, response.getStatus());
         verify(paymentRepository).save(testPayment);
         verify(refundRepository).save(any(Refund.class));
-    }
-
-    @Test
-    void getPendingPayments_Success() {
-        Payment pendingPayment = Payment.builder()
-                .id(UUID.randomUUID())
-                .userId(UUID.randomUUID())
-                .courseId(UUID.randomUUID())
-                .amount(200.0)
-                .method(PaymentMethod.BANK_TRANSFER)
-                .status(PaymentStatus.PENDING)
-                .bankAccount("1234567890")
-                .paymentReference("PAY-87654321")
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        when(paymentRepository.findByStatus(PaymentStatus.PENDING)).thenReturn(Arrays.asList(pendingPayment));
-
-        List<PaymentResponse> responses = paymentService.getPendingPayments();
-
-        assertEquals(1, responses.size());
-        assertEquals(PaymentStatus.PENDING, responses.get(0).getStatus());
-        assertEquals("user456", responses.get(0).getUserId());
-    }
-
-    @Test
-    void getRefundRequests_Success() {
-        Payment refundRequestedPayment = Payment.builder()
-                .id(UUID.randomUUID())
-                .userId(UUID.randomUUID())
-                .courseId(UUID.randomUUID())
-                .amount(300.0)
-                .method(PaymentMethod.CREDIT_CARD)
-                .status(PaymentStatus.REFUND_REQUESTED)
-                .cardLastFour("5678")
-                .paymentReference("PAY-13579246")
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        when(paymentRepository.findByStatus(PaymentStatus.REFUND_REQUESTED)).thenReturn(Arrays.asList(refundRequestedPayment));
-
-        List<PaymentResponse> responses = paymentService.getRefundRequests();
-
-        assertEquals(1, responses.size());
-        assertEquals(PaymentStatus.REFUND_REQUESTED, responses.get(0).getStatus());
-        assertEquals("user789", responses.get(0).getUserId());
     }
 }

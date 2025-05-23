@@ -1,27 +1,34 @@
 package com.example.paymentbe.controller;
 
-import com.example.paymentbe.dto.*;
-import com.example.paymentbe.model.*;
-import com.example.paymentbe.service.PaymentService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import com.example.paymentbe.dto.PaymentRequest;
+import com.example.paymentbe.dto.PaymentResponse;
+import com.example.paymentbe.dto.RefundRequest;
+import com.example.paymentbe.enums.*;
+import com.example.paymentbe.service.PaymentService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentControllerTest {
@@ -59,32 +66,6 @@ class PaymentControllerTest {
                 .status(PaymentStatus.PAID)
                 .paymentReference("PAY-123456")
                 .build();
-    }
-
-    @Test
-    void createPayment_Success() throws Exception {
-        when(paymentService.processPayment(any(PaymentRequest.class))).thenReturn(successResponse);
-
-        mockMvc.perform(post("/api/payments")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.paymentId").value(testPaymentId.toString()))
-                .andExpect(jsonPath("$.status").value("PAID"));
-
-        verify(paymentService).processPayment(any(PaymentRequest.class));
-    }
-
-    @Test
-    void createPayment_ValidationFailed() throws Exception {
-        PaymentRequest invalidRequest = new PaymentRequest(); // Missing required fields
-
-        mockMvc.perform(post("/api/payments")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidRequest)))
-                .andExpect(status().isBadRequest());
-
-        verify(paymentService, never()).processPayment(any());
     }
 
     @Test

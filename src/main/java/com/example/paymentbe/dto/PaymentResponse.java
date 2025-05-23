@@ -1,6 +1,6 @@
 package com.example.paymentbe.dto;
 
-import com.example.paymentbe.model.PaymentStatus;
+import com.example.paymentbe.enums.PaymentStatus;
 import lombok.Builder;
 import lombok.Data;
 

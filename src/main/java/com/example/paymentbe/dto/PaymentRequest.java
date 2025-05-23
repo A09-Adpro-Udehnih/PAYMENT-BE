@@ -1,7 +1,7 @@
 package com.example.paymentbe.dto;
 
 import java.util.UUID;
-import com.example.paymentbe.model.PaymentMethod;
+import com.example.paymentbe.enums.PaymentMethod;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;

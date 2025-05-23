@@ -1,4 +1,4 @@
-package com.example.paymentbe.model;
+package com.example.paymentbe.enums;
 
 public enum PaymentStatus {
     PENDING,

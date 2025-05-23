@@ -1,6 +1,6 @@
 package com.example.paymentbe.service.strategy;
 
-import com.example.paymentbe.model.PaymentMethod;
+import com.example.paymentbe.enums.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
