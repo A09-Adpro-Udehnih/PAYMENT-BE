@@ -2,6 +2,7 @@ package com.example.paymentbe.controller;
 
 import com.example.paymentbe.dto.*;
 import com.example.paymentbe.service.PaymentService;
+import com.example.paymentbe.service.RefundService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PaymentController {
     private final PaymentService paymentService;
+    private final RefundService refundService;
 
     @PostMapping
     @PreAuthorize("hasRole('STUDENT')")
@@ -49,7 +51,7 @@ public class PaymentController {
             @PathVariable String paymentId,
             @Valid @RequestBody RefundRequest request) {
         try {
-            return ResponseEntity.ok(paymentService.requestRefund(paymentId, request));
+            return ResponseEntity.ok(refundService.requestRefund(paymentId, request));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorResponse(e.getMessage(), "REFUND_ERROR"));

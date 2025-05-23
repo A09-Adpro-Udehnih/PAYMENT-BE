@@ -44,6 +44,8 @@ public class PaymentServiceImplTest {
 
     @InjectMocks
     private PaymentServiceImpl paymentService;
+    @InjectMocks
+    private RefundServiceImpl refundService;
 
     private UUID testPaymentId;
     private UUID testUserId;
@@ -103,7 +105,7 @@ public class PaymentServiceImplTest {
     void requestRefund_Success() {
         when(paymentRepository.findById(any(UUID.class))).thenReturn(Optional.of(testPayment));
         
-        PaymentResponse response = paymentService.requestRefund(testPaymentId.toString(), testRefundRequest);
+        PaymentResponse response = refundService.requestRefund(testPaymentId.toString(), testRefundRequest);
 
         assertEquals(PaymentStatus.REFUND_REQUESTED, response.getStatus());
         verify(paymentRepository).save(testPayment);

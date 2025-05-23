@@ -7,27 +7,34 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.example.paymentbe.dto.PaymentRequest;
 import com.example.paymentbe.dto.PaymentResponse;
 import com.example.paymentbe.dto.RefundRequest;
-import com.example.paymentbe.enums.*;
+import com.example.paymentbe.enums.PaymentMethod;
+import com.example.paymentbe.enums.PaymentStatus;
 import com.example.paymentbe.service.PaymentService;
+import com.example.paymentbe.service.RefundService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +45,9 @@ class PaymentControllerTest {
 
     @Mock
     private PaymentService paymentService;
+
+    @Mock
+    private RefundService refundService;
 
     @InjectMocks
     private PaymentController paymentController;
@@ -52,6 +62,8 @@ class PaymentControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(paymentController).build();
         testPaymentId = UUID.randomUUID();
+        testUserId = UUID.randomUUID();
+        testCourseId = UUID.randomUUID();
 
         validRequest = new PaymentRequest();
         validRequest.setUserId(testUserId);
@@ -99,7 +111,7 @@ class PaymentControllerTest {
                 .status(PaymentStatus.REFUNDED)
                 .build();
 
-        when(paymentService.requestRefund(eq(testPaymentId.toString()), any(RefundRequest.class)))
+        when(refundService.requestRefund(eq(testPaymentId.toString()), any(RefundRequest.class)))
                 .thenReturn(refundResponse);
 
         mockMvc.perform(post("/api/payments/{paymentId}/refund", testPaymentId)
@@ -108,7 +120,7 @@ class PaymentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("REFUNDED"));
 
-        verify(paymentService).requestRefund(eq(testPaymentId.toString()), any(RefundRequest.class));
+        verify(refundService).requestRefund(eq(testPaymentId.toString()), any(RefundRequest.class));
     }
 
     @Test
@@ -116,7 +128,7 @@ class PaymentControllerTest {
         RefundRequest refundRequest = new RefundRequest();
         refundRequest.setReason("Test reason");
 
-        when(paymentService.requestRefund(anyString(), any(RefundRequest.class)))
+        when(refundService.requestRefund(anyString(), any(RefundRequest.class)))
                 .thenThrow(new RuntimeException("Only PAID payments can be refunded"));
 
         mockMvc.perform(post("/api/payments/{paymentId}/refund", testPaymentId)
@@ -124,7 +136,7 @@ class PaymentControllerTest {
                 .content(objectMapper.writeValueAsString(refundRequest)))
                 .andExpect(status().isBadRequest());
 
-        verify(paymentService).requestRefund(eq(testPaymentId.toString()), any(RefundRequest.class));
+        verify(refundService).requestRefund(eq(testPaymentId.toString()), any(RefundRequest.class));
     }
 
     @Test
