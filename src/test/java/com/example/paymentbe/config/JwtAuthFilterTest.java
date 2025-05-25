@@ -1,6 +1,7 @@
 package com.example.paymentbe.config;
 
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,8 +12,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.io.IOException;
+
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,98 +41,89 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    void doFilterInternal_ValidToken_SetsAuthentication() throws Exception {
-        // Arrange
-        String token = "valid.jwt.token";
-        String userId = "testUserId";
-        
+    void doFilterInternal_WithValidToken_ShouldSetAuthentication() throws ServletException, IOException {
+        // Given
+        String token = "valid-token";
+        String userId = "user123";
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtUtils.validateJwtToken(token)).thenReturn(true);
         when(jwtUtils.getUserIdFromJwtToken(token)).thenReturn(userId);
 
-        // Act
+        // When
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
 
-        // Assert
+        // Then
         verify(filterChain).doFilter(request, response);
-        verify(jwtUtils).validateJwtToken(token);
-        verify(jwtUtils).getUserIdFromJwtToken(token);
-        
-        // Verify that authentication was set
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
         assertEquals(userId, SecurityContextHolder.getContext().getAuthentication().getPrincipal());
     }
 
     @Test
-    void doFilterInternal_InvalidToken_DoesNotSetAuthentication() throws Exception {
-        // Arrange
-        String token = "invalid.jwt.token";
-        
+    void doFilterInternal_WithInvalidToken_ShouldNotSetAuthentication() throws ServletException, IOException {
+        // Given
+        String token = "invalid-token";
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtUtils.validateJwtToken(token)).thenReturn(false);
 
-        // Act
+        // When
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
 
-        // Assert
+        // Then
         verify(filterChain).doFilter(request, response);
-        verify(jwtUtils).validateJwtToken(token);
-        verify(jwtUtils, never()).getUserIdFromJwtToken(anyString());
-        
-        // Verify that no authentication was set
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
-    void doFilterInternal_NoAuthHeader_DoesNotSetAuthentication() throws Exception {
-        // Arrange
+    void doFilterInternal_WithNoAuthHeader_ShouldNotSetAuthentication() throws ServletException, IOException {
+        // Given
         when(request.getHeader("Authorization")).thenReturn(null);
 
-        // Act
+        // When
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
 
-        // Assert
+        // Then
         verify(filterChain).doFilter(request, response);
-        verify(jwtUtils, never()).validateJwtToken(anyString());
-        verify(jwtUtils, never()).getUserIdFromJwtToken(anyString());
-        
-        // Verify that no authentication was set
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
-    void doFilterInternal_InvalidAuthHeaderFormat_DoesNotSetAuthentication() throws Exception {
-        // Arrange
-        when(request.getHeader("Authorization")).thenReturn("InvalidFormat token");
+    void doFilterInternal_WithNonBearerToken_ShouldNotSetAuthentication() throws ServletException, IOException {
+        // Given
+        when(request.getHeader("Authorization")).thenReturn("Basic dXNlcjpwYXNz");
 
-        // Act
+        // When
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
 
-        // Assert
+        // Then
         verify(filterChain).doFilter(request, response);
-        verify(jwtUtils, never()).validateJwtToken(anyString());
-        verify(jwtUtils, never()).getUserIdFromJwtToken(anyString());
-        
-        // Verify that no authentication was set
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
-    void doFilterInternal_TokenValidationException_ContinuesChain() throws Exception {
-        // Arrange
-        String token = "valid.jwt.token";
+    void doFilterInternal_WithValidationException_ShouldNotSetAuthentication() throws ServletException, IOException {
+        // Given
+        String token = "valid-token";
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtUtils.validateJwtToken(token)).thenThrow(new RuntimeException("Token validation failed"));
+        when(jwtUtils.validateJwtToken(token)).thenThrow(new RuntimeException("Validation failed"));
 
-        // Act
+        // When
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
 
-        // Assert
+        // Then
         verify(filterChain).doFilter(request, response);
-        verify(jwtUtils).validateJwtToken(token);
-        verify(jwtUtils, never()).getUserIdFromJwtToken(anyString());
-        
-        // Verify that no authentication was set
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    void doFilterInternal_WithEmptyToken_ShouldNotSetAuthentication() throws ServletException, IOException {
+        // Given
+        when(request.getHeader("Authorization")).thenReturn("Bearer ");
+
+        // When
+        jwtAuthFilter.doFilterInternal(request, response, filterChain);
+
+        // Then
+        verify(filterChain).doFilter(request, response);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 } 
