@@ -84,7 +84,7 @@ class PaymentControllerTest {
     void getPayment_Success() throws Exception {
         when(paymentService.getPayment(testPaymentId.toString())).thenReturn(successResponse);
 
-        mockMvc.perform(get("/api/payments/{paymentId}", testPaymentId))
+        mockMvc.perform(get("/api/v1/payment/{paymentId}", testPaymentId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paymentId").value(testPaymentId.toString()));
 
@@ -95,7 +95,7 @@ class PaymentControllerTest {
     void getPayment_NotFound() throws Exception {
         when(paymentService.getPayment(anyString())).thenThrow(new RuntimeException("Payment not found"));
 
-        mockMvc.perform(get("/api/payments/{paymentId}", "nonexistent"))
+        mockMvc.perform(get("/api/v1/payment/{paymentId}", "nonexistent"))
                 .andExpect(status().isNotFound());
 
         verify(paymentService).getPayment("nonexistent");
@@ -114,7 +114,7 @@ class PaymentControllerTest {
         when(refundService.requestRefund(eq(testPaymentId.toString()), any(RefundRequest.class)))
                 .thenReturn(refundResponse);
 
-        mockMvc.perform(post("/api/payments/{paymentId}/refund", testPaymentId)
+        mockMvc.perform(post("/api/v1/payment/{paymentId}/refund", testPaymentId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(refundRequest)))
                 .andExpect(status().isOk())
@@ -131,7 +131,7 @@ class PaymentControllerTest {
         when(refundService.requestRefund(anyString(), any(RefundRequest.class)))
                 .thenThrow(new RuntimeException("Only PAID payments can be refunded"));
 
-        mockMvc.perform(post("/api/payments/{paymentId}/refund", testPaymentId)
+        mockMvc.perform(post("/api/v1/payment/{paymentId}/refund", testPaymentId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(refundRequest)))
                 .andExpect(status().isBadRequest());
@@ -148,7 +148,7 @@ class PaymentControllerTest {
 
         when(paymentService.getUserPayments("user123")).thenReturn(payments);
 
-        mockMvc.perform(get("/api/payments/user/{userId}", "user123"))
+        mockMvc.perform(get("/api/v1/payment/user/{userId}", "user123"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
 
