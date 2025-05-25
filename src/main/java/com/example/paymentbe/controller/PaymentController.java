@@ -20,7 +20,7 @@ public class PaymentController {
     private final RefundService refundService;
 
     @PostMapping
-    @PreAuthorize("hasRole('STUDENT')")
+    // @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<?> createPayment(@Valid @RequestBody PaymentRequest request) {
         try {
             return ResponseEntity.ok(paymentService.processPayment(request));
@@ -46,7 +46,7 @@ public class PaymentController {
     }
 
     @PostMapping("/{paymentId}/refund")
-    @PreAuthorize("hasRole('STUDENT')")
+    // @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<?> requestRefund(
             @PathVariable String paymentId,
             @Valid @RequestBody RefundRequest request) {
