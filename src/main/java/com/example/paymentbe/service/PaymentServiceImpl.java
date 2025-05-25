@@ -63,10 +63,14 @@ public class PaymentServiceImpl implements PaymentService {
         UUID paymentUUID = UUID.fromString(paymentId);
         Payment payment = paymentRepository.findById(paymentUUID)
                 .orElseThrow(() -> new RuntimeException("Payment not found with ID: " + paymentId));
-        PaymentStatus newStatus = PaymentStatus.valueOf(status.toUpperCase());
-        payment.setStatus(newStatus);
-        paymentRepository.save(payment);
-        return buildPaymentResponse(payment);
+        try {
+            PaymentStatus newStatus = PaymentStatus.valueOf(status.toUpperCase());
+            payment.setStatus(newStatus);
+            paymentRepository.save(payment);
+            return buildPaymentResponse(payment);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid payment status: " + status);
+        }
     }
 
     private void validatePaymentRequest(PaymentRequest request) {
