@@ -3,9 +3,9 @@ package com.example.paymentbe.service;
 import com.example.paymentbe.dto.PaymentRequest;
 import com.example.paymentbe.dto.PaymentResponse;
 import com.example.paymentbe.dto.RefundRequest;
+import com.example.paymentbe.enums.PaymentMethod;
+import com.example.paymentbe.enums.PaymentStatus;
 import com.example.paymentbe.model.Payment;
-import com.example.paymentbe.enums.*;
-import com.example.paymentbe.model.Refund;
 import com.example.paymentbe.repository.PaymentRepository;
 import com.example.paymentbe.repository.RefundRepository;
 import com.example.paymentbe.service.strategy.PaymentStrategy;
@@ -18,12 +18,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -44,15 +42,12 @@ public class PaymentServiceImplTest {
 
     @InjectMocks
     private PaymentServiceImpl paymentService;
-    @InjectMocks
-    private RefundServiceImpl refundService;
 
     private UUID testPaymentId;
     private UUID testUserId;
     private UUID testCourseId;
     private Payment testPayment;
     private PaymentRequest testPaymentRequest;
-    private RefundRequest testRefundRequest;
 
     @BeforeEach
     void setUp() {
@@ -80,9 +75,6 @@ public class PaymentServiceImplTest {
         testPaymentRequest.setMethod(PaymentMethod.CREDIT_CARD);
         testPaymentRequest.setCardNumber("4111111111111111");
         testPaymentRequest.setCardCvc("123");
-
-        testRefundRequest = new RefundRequest();
-        testRefundRequest.setReason("Not satisfied with the course");
     }
 
     @Test
@@ -99,16 +91,5 @@ public class PaymentServiceImplTest {
 
         assertEquals(PaymentStatus.FAILED, response.getStatus());
         verify(paymentRepository).save(any(Payment.class));
-    }
-
-    @Test
-    void requestRefund_Success() {
-        when(paymentRepository.findById(any(UUID.class))).thenReturn(Optional.of(testPayment));
-        
-        PaymentResponse response = refundService.requestRefund(testPaymentId.toString(), testRefundRequest);
-
-        assertEquals(PaymentStatus.REFUND_REQUESTED, response.getStatus());
-        verify(paymentRepository).save(testPayment);
-        verify(refundRepository).save(any(Refund.class));
     }
 }

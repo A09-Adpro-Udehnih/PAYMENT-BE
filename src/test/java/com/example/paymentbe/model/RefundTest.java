@@ -1,5 +1,6 @@
 package com.example.paymentbe.model;
 
+import com.example.paymentbe.enums.RefundStatus;
 import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -23,6 +24,7 @@ public class RefundTest {
                 .payment(payment)
                 .reason(reason)
                 .processedBy(processedBy)
+                .status(RefundStatus.PENDING)
                 .createdAt(now)
                 .requestedAt(now)
                 .build();
@@ -32,6 +34,7 @@ public class RefundTest {
         assertEquals(payment, refund.getPayment());
         assertEquals(reason, refund.getReason());
         assertEquals(processedBy, refund.getProcessedBy());
+        assertEquals(RefundStatus.PENDING, refund.getStatus());
         assertEquals(now, refund.getCreatedAt());
         assertEquals(now, refund.getRequestedAt());
     }
@@ -46,6 +49,7 @@ public class RefundTest {
         assertNull(refund.getPayment());
         assertNull(refund.getReason());
         assertNull(refund.getProcessedBy());
+        assertNull(refund.getStatus());
         assertNull(refund.getCreatedAt());
         assertNull(refund.getRequestedAt());
     }
@@ -60,13 +64,14 @@ public class RefundTest {
         LocalDateTime now = LocalDateTime.now();
 
         // Act
-        Refund refund = new Refund(refundId, payment, reason, processedBy, now, now);
+        Refund refund = new Refund(refundId, payment, reason, processedBy, RefundStatus.PENDING, now, now, null);
 
         // Assert
         assertEquals(refundId, refund.getId());
         assertEquals(payment, refund.getPayment());
         assertEquals(reason, refund.getReason());
         assertEquals(processedBy, refund.getProcessedBy());
+        assertEquals(RefundStatus.PENDING, refund.getStatus());
         assertEquals(now, refund.getCreatedAt());
         assertEquals(now, refund.getRequestedAt());
     }
@@ -86,6 +91,7 @@ public class RefundTest {
         refund.setPayment(payment);
         refund.setReason(reason);
         refund.setProcessedBy(processedBy);
+        refund.setStatus(RefundStatus.PENDING);
         refund.setCreatedAt(now);
         refund.setRequestedAt(now);
 
@@ -94,6 +100,7 @@ public class RefundTest {
         assertEquals(payment, refund.getPayment());
         assertEquals(reason, refund.getReason());
         assertEquals(processedBy, refund.getProcessedBy());
+        assertEquals(RefundStatus.PENDING, refund.getStatus());
         assertEquals(now, refund.getCreatedAt());
         assertEquals(now, refund.getRequestedAt());
     }
@@ -110,6 +117,7 @@ public class RefundTest {
                 .payment(payment)
                 .reason("Reason 1")
                 .processedBy("admin1")
+                .status(RefundStatus.PENDING)
                 .createdAt(now)
                 .requestedAt(now)
                 .build();
@@ -119,6 +127,7 @@ public class RefundTest {
                 .payment(payment)
                 .reason("Reason 1")
                 .processedBy("admin1")
+                .status(RefundStatus.PENDING)
                 .createdAt(now)
                 .requestedAt(now)
                 .build();
@@ -128,6 +137,7 @@ public class RefundTest {
                 .payment(payment)
                 .reason("Reason 2")
                 .processedBy("admin2")
+                .status(RefundStatus.ACCEPTED)
                 .createdAt(now)
                 .requestedAt(now)
                 .build();
@@ -155,6 +165,7 @@ public class RefundTest {
                 .payment(payment)
                 .reason(reason)
                 .processedBy(processedBy)
+                .status(RefundStatus.PENDING)
                 .createdAt(now)
                 .requestedAt(now)
                 .build();
@@ -166,6 +177,7 @@ public class RefundTest {
         assertTrue(toStringResult.contains(payment.toString()));
         assertTrue(toStringResult.contains(reason));
         assertTrue(toStringResult.contains(processedBy));
+        assertTrue(toStringResult.contains(RefundStatus.PENDING.toString()));
         assertTrue(toStringResult.contains(now.toString()));
     }
 
@@ -182,6 +194,7 @@ public class RefundTest {
                 .payment(payment)
                 .reason("Test payment relationship")
                 .processedBy("system")
+                .status(RefundStatus.PENDING)
                 .createdAt(now)
                 .requestedAt(now)
                 .build();

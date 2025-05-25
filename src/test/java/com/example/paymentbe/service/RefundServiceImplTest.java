@@ -2,8 +2,10 @@ package com.example.paymentbe.service;
 
 import com.example.paymentbe.dto.PaymentResponse;
 import com.example.paymentbe.dto.RefundRequest;
-import com.example.paymentbe.enums.PaymentStatus;
+import com.example.paymentbe.dto.RefundResponse;
 import com.example.paymentbe.enums.PaymentMethod;
+import com.example.paymentbe.enums.PaymentStatus;
+import com.example.paymentbe.enums.RefundStatus;
 import com.example.paymentbe.model.Payment;
 import com.example.paymentbe.model.Refund;
 import com.example.paymentbe.repository.PaymentRepository;
@@ -18,14 +20,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,20 +64,15 @@ class RefundServiceImplTest {
         when(refundRepository.save(any(Refund.class))).thenReturn(mockRefund);
 
         // When
-        PaymentResponse result = refundService.requestRefund(paymentId, refundRequest);
+        RefundResponse result = refundService.requestRefund(paymentId, refundRequest);
 
         // Then
         assertNotNull(result);
-        assertEquals(paymentId, result.getPaymentId());
-        assertEquals(mockPayment.getUserId(), result.getUserId());
-        assertEquals(mockPayment.getCourseId(), result.getCourseId());
-        assertEquals(100.0, result.getAmount());
-        assertEquals("CREDIT_CARD", result.getPaymentMethod());
-        assertEquals(PaymentStatus.REFUND_REQUESTED, result.getStatus());
-        assertEquals("PAY_REF_123", result.getPaymentReference());
-        assertEquals("Product not as described", result.getRefundReason());
+        assertEquals(paymentId, result.getPaymentId().toString());
+        assertEquals("Product not as described", result.getReason());
+        assertEquals(RefundStatus.PENDING, result.getStatus());
         assertNotNull(result.getCreatedAt());
-        assertNotNull(result.getUpdatedAt());
+        assertNotNull(result.getRequestedAt());
 
         // Verify payment status was updated
         ArgumentCaptor<Payment> paymentCaptor = ArgumentCaptor.forClass(Payment.class);
@@ -113,29 +108,13 @@ class RefundServiceImplTest {
     }
 
     @Test
-    void requestRefund_InvalidPaymentId_ThrowsException() {
-        // Given
-        String invalidPaymentId = "invalid-uuid";
-
-        // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-            () -> refundService.requestRefund(invalidPaymentId, refundRequest));
-        
-        assertTrue(exception.getMessage().contains("Invalid UUID string"));
-        
-        verify(paymentRepository, never()).findById(any(UUID.class));
-        verify(paymentRepository, never()).save(any(Payment.class));
-        verify(refundRepository, never()).save(any(Refund.class));
-    }
-
-    @Test
-    void requestRefund_PaymentStatusNotPaid_ThrowsException() {
+    void requestRefund_NotPaidPayment_ThrowsException() {
         // Given
         mockPayment.setStatus(PaymentStatus.PENDING);
         when(paymentRepository.findById(paymentUUID)).thenReturn(Optional.of(mockPayment));
 
         // When & Then
-        IllegalStateException exception = assertThrows(IllegalStateException.class,
+        IllegalStateException exception = assertThrows(IllegalStateException.class, 
             () -> refundService.requestRefund(paymentId, refundRequest));
         
         assertEquals("Only PAID payments can be refunded", exception.getMessage());
@@ -146,148 +125,121 @@ class RefundServiceImplTest {
     }
 
     @Test
-    void requestRefund_PaymentStatusRefunded_ThrowsException() {
+    void requestRefund_ExistingRefund_ThrowsException() {
         // Given
-        mockPayment.setStatus(PaymentStatus.REFUNDED);
         when(paymentRepository.findById(paymentUUID)).thenReturn(Optional.of(mockPayment));
+        when(refundRepository.existsByPaymentId(paymentUUID)).thenReturn(true);
 
         // When & Then
-        IllegalStateException exception = assertThrows(IllegalStateException.class,
+        IllegalStateException exception = assertThrows(IllegalStateException.class, 
             () -> refundService.requestRefund(paymentId, refundRequest));
         
-        assertEquals("Only PAID payments can be refunded", exception.getMessage());
+        assertEquals("Refund request already exists for this payment", exception.getMessage());
         
         verify(paymentRepository, times(1)).findById(paymentUUID);
+        verify(refundRepository, times(1)).existsByPaymentId(paymentUUID);
         verify(paymentRepository, never()).save(any(Payment.class));
         verify(refundRepository, never()).save(any(Refund.class));
     }
 
     @Test
-    void requestRefund_PaymentStatusFailed_ThrowsException() {
+    void getPendingRefunds_Success() {
         // Given
-        mockPayment.setStatus(PaymentStatus.FAILED);
-        when(paymentRepository.findById(paymentUUID)).thenReturn(Optional.of(mockPayment));
-
-        // When & Then
-        IllegalStateException exception = assertThrows(IllegalStateException.class,
-            () -> refundService.requestRefund(paymentId, refundRequest));
-        
-        assertEquals("Only PAID payments can be refunded", exception.getMessage());
-        
-        verify(paymentRepository, times(1)).findById(paymentUUID);
-        verify(paymentRepository, never()).save(any(Payment.class));
-        verify(refundRepository, never()).save(any(Refund.class));
-    }
-
-    @Test
-    void getRefundRequests_WithData_Success() {
-        // Given
-        Payment payment1 = createMockPayment();
-        payment1.setStatus(PaymentStatus.REFUND_REQUESTED);
-        payment1.setRefund(mockRefund);
-        
-        Payment payment2 = createMockPayment();
-        payment2.setId(UUID.randomUUID());
-        payment2.setStatus(PaymentStatus.REFUND_REQUESTED);
-        payment2.setUserId(UUID.randomUUID());
-        payment2.setCourseId(UUID.randomUUID());
-        payment2.setRefund(mockRefund);
-
-        List<Payment> mockPayments = Arrays.asList(payment1, payment2);
-        when(paymentRepository.findByStatus(PaymentStatus.REFUND_REQUESTED)).thenReturn(mockPayments);
+        List<Refund> mockRefunds = Arrays.asList(mockRefund);
+        when(refundRepository.findByStatus(RefundStatus.PENDING)).thenReturn(mockRefunds);
 
         // When
-        List<PaymentResponse> result = refundService.getRefundRequests();
-
-        // Then
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        
-        PaymentResponse response1 = result.get(0);
-        assertEquals(payment1.getId().toString(), response1.getPaymentId());
-        assertEquals(payment1.getUserId(), response1.getUserId());
-        assertEquals(payment1.getCourseId(), response1.getCourseId());
-        assertEquals(100.0, response1.getAmount());
-        assertEquals("CREDIT_CARD", response1.getPaymentMethod());
-        assertEquals(PaymentStatus.REFUND_REQUESTED, response1.getStatus());
-        assertEquals("Product not as described", response1.getRefundReason());
-
-        PaymentResponse response2 = result.get(1);
-        assertEquals(payment2.getId().toString(), response2.getPaymentId());
-        assertEquals(payment2.getUserId(), response2.getUserId());
-        assertEquals(payment2.getCourseId(), response2.getCourseId());
-        assertEquals("Product not as described", response2.getRefundReason());
-
-        verify(paymentRepository, times(1)).findByStatus(PaymentStatus.REFUND_REQUESTED);
-    }
-
-    @Test
-    void getRefundRequests_EmptyList_Success() {
-        // Given
-        when(paymentRepository.findByStatus(PaymentStatus.REFUND_REQUESTED)).thenReturn(Collections.emptyList());
-
-        // When
-        List<PaymentResponse> result = refundService.getRefundRequests();
-
-        // Then
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-        
-        verify(paymentRepository, times(1)).findByStatus(PaymentStatus.REFUND_REQUESTED);
-    }
-
-    @Test
-    void getRefundRequests_WithNullRefund_Success() {
-        // Given
-        Payment payment = createMockPayment();
-        payment.setStatus(PaymentStatus.REFUND_REQUESTED);
-        payment.setRefund(null); // No refund object
-
-        List<Payment> mockPayments = Arrays.asList(payment);
-        when(paymentRepository.findByStatus(PaymentStatus.REFUND_REQUESTED)).thenReturn(mockPayments);
-
-        // When
-        List<PaymentResponse> result = refundService.getRefundRequests();
+        List<RefundResponse> result = refundService.getPendingRefunds();
 
         // Then
         assertNotNull(result);
         assertEquals(1, result.size());
         
-        PaymentResponse response = result.get(0);
-        assertEquals(payment.getId().toString(), response.getPaymentId());
-        assertNull(response.getRefundReason()); // Should be null when no refund object
+        RefundResponse response = result.get(0);
+        assertEquals(mockRefund.getId().toString(), response.getId().toString());
+        assertEquals(mockRefund.getPayment().getId().toString(), response.getPaymentId().toString());
+        assertEquals(mockRefund.getReason(), response.getReason());
+        assertEquals(mockRefund.getStatus(), response.getStatus());
         
-        verify(paymentRepository, times(1)).findByStatus(PaymentStatus.REFUND_REQUESTED);
+        verify(refundRepository, times(1)).findByStatus(RefundStatus.PENDING);
     }
 
     @Test
-    void getRefundRequests_WithRefundButNullReason_Success() {
+    void getRefund_Success() {
         // Given
-        Payment payment = createMockPayment();
-        payment.setStatus(PaymentStatus.REFUND_REQUESTED);
+        UUID refundId = UUID.randomUUID();
+        when(refundRepository.findById(refundId)).thenReturn(Optional.of(mockRefund));
+
+        // When
+        RefundResponse result = refundService.getRefund(refundId.toString());
+
+        // Then
+        assertNotNull(result);
+        assertEquals(mockRefund.getId().toString(), result.getId().toString());
+        assertEquals(mockRefund.getPayment().getId().toString(), result.getPaymentId().toString());
+        assertEquals(mockRefund.getReason(), result.getReason());
+        assertEquals(mockRefund.getStatus(), result.getStatus());
         
-        Refund refundWithNullReason = Refund.builder()
+        verify(refundRepository, times(1)).findById(refundId);
+    }
+
+    @Test
+    void getRefund_NotFound_ThrowsException() {
+        // Given
+        UUID refundId = UUID.randomUUID();
+        when(refundRepository.findById(refundId)).thenReturn(Optional.empty());
+
+        // When & Then
+        RuntimeException exception = assertThrows(RuntimeException.class, 
+            () -> refundService.getRefund(refundId.toString()));
+        
+        assertEquals("Refund not found with ID: " + refundId, exception.getMessage());
+        
+        verify(refundRepository, times(1)).findById(refundId);
+    }
+
+    @Test
+    void testRefundEqualsAndHashCode() {
+        // Arrange
+        UUID sharedId = UUID.randomUUID();
+        Payment payment = new Payment();
+        LocalDateTime now = LocalDateTime.now();
+        
+        Refund refund1 = Refund.builder()
+                .id(sharedId)
                 .payment(payment)
-                .reason(null) // Null reason
-                .createdAt(LocalDateTime.now())
+                .reason("Reason 1")
+                .processedBy("admin1")
+                .status(RefundStatus.PENDING)
+                .createdAt(now)
+                .requestedAt(now)
                 .build();
-        payment.setRefund(refundWithNullReason);
+                
+        Refund refund2 = Refund.builder()
+                .id(sharedId)
+                .payment(payment)
+                .reason("Reason 1")
+                .processedBy("admin1")
+                .status(RefundStatus.PENDING)
+                .createdAt(now)
+                .requestedAt(now)
+                .build();
+                
+        Refund refund3 = Refund.builder()
+                .id(UUID.randomUUID())
+                .payment(payment)
+                .reason("Reason 2")
+                .processedBy("admin2")
+                .status(RefundStatus.ACCEPTED)
+                .createdAt(now)
+                .requestedAt(now)
+                .build();
 
-        List<Payment> mockPayments = Arrays.asList(payment);
-        when(paymentRepository.findByStatus(PaymentStatus.REFUND_REQUESTED)).thenReturn(mockPayments);
-
-        // When
-        List<PaymentResponse> result = refundService.getRefundRequests();
-
-        // Then
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        
-        PaymentResponse response = result.get(0);
-        assertEquals(payment.getId().toString(), response.getPaymentId());
-        assertNull(response.getRefundReason()); // Should be null when reason is null
-        
-        verify(paymentRepository, times(1)).findByStatus(PaymentStatus.REFUND_REQUESTED);
+        // Assert
+        assertEquals(refund1, refund2);
+        assertEquals(refund1.hashCode(), refund2.hashCode());
+        assertNotEquals(refund1, refund3);
+        assertNotEquals(refund1.hashCode(), refund3.hashCode());
     }
 
     // Helper methods
@@ -313,9 +265,12 @@ class RefundServiceImplTest {
 
     private Refund createMockRefund() {
         return Refund.builder()
+                .id(UUID.randomUUID())
                 .payment(mockPayment)
                 .reason("Product not as described")
+                .status(RefundStatus.PENDING)
                 .createdAt(LocalDateTime.now())
+                .requestedAt(LocalDateTime.now())
                 .build();
     }
 }

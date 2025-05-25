@@ -31,8 +31,10 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.example.paymentbe.dto.PaymentRequest;
 import com.example.paymentbe.dto.PaymentResponse;
 import com.example.paymentbe.dto.RefundRequest;
+import com.example.paymentbe.dto.RefundResponse;
 import com.example.paymentbe.enums.PaymentMethod;
 import com.example.paymentbe.enums.PaymentStatus;
+import com.example.paymentbe.enums.RefundStatus;
 import com.example.paymentbe.service.PaymentService;
 import com.example.paymentbe.service.RefundService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -106,9 +108,15 @@ class PaymentControllerTest {
         RefundRequest refundRequest = new RefundRequest();
         refundRequest.setReason("Test reason");
 
-        PaymentResponse refundResponse = PaymentResponse.builder()
-                .paymentId(testPaymentId.toString())
-                .status(PaymentStatus.REFUNDED)
+        RefundResponse refundResponse = RefundResponse.builder()
+                .id(UUID.randomUUID())
+                .paymentId(testPaymentId)
+                .reason("Test reason")
+                .status(RefundStatus.PENDING)
+                .payment(PaymentResponse.builder()
+                    .paymentId(testPaymentId.toString())
+                    .status(PaymentStatus.REFUND_REQUESTED)
+                    .build())
                 .build();
 
         when(refundService.requestRefund(eq(testPaymentId.toString()), any(RefundRequest.class)))
@@ -118,7 +126,7 @@ class PaymentControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(refundRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("REFUNDED"));
+                .andExpect(jsonPath("$.status").value(RefundStatus.PENDING.toString()));
 
         verify(refundService).requestRefund(eq(testPaymentId.toString()), any(RefundRequest.class));
     }

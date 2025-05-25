@@ -1,5 +1,6 @@
 package com.example.paymentbe.model;
 
+import com.example.paymentbe.enums.RefundStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -29,10 +30,17 @@ public class Refund {
     @Column(name = "processed_by")
     private String processedBy;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RefundStatus status;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "requested_at")
     private LocalDateTime requestedAt;
+
+    @Column(name = "processed_at")
+    private LocalDateTime processedAt;
 }
