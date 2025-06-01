@@ -8,10 +8,10 @@ import lombok.Data;
 
 @Data
 public class PaymentRequest {
-    @NotBlank(message = "User ID is required")
+    @NotNull(message = "User ID is required")
     private UUID userId;
 
-    @NotBlank(message = "Course ID is required")
+    @NotNull(message = "Course ID is required")
     private UUID courseId;
 
     @Positive(message = "Amount must be positive")
@@ -20,7 +20,7 @@ public class PaymentRequest {
     @NotNull(message = "Payment method is required")
     private PaymentMethod method;
 
-    private String bankAccount; // Required for BANK_TRANSFER
-    private String cardNumber;  // Required for CREDIT_CARD
-    private String cardCvc;     // Required for CREDIT_CARD
+    private String bankAccount;
+    private String cardNumber;
+    private String cardCvc;
 }

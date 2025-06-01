@@ -53,7 +53,6 @@ class AdminControllerTest {
 
     @Test
     void updatePaymentStatus_Success() throws Exception {
-        // Given
         String paymentId = "payment123";
         String status = "PAID";
         PaymentResponse mockResponse = createMockPaymentResponse();
@@ -61,7 +60,6 @@ class AdminControllerTest {
         when(paymentService.updatePaymentStatus(paymentId, status))
                 .thenReturn(mockResponse);
 
-        // When & Then
         mockMvc.perform(put("/api/v1/payment/admin/{paymentId}/status", paymentId)
                         .param("status", status)
                         .contentType(MediaType.APPLICATION_JSON))
@@ -75,7 +73,6 @@ class AdminControllerTest {
 
     @Test
     void updatePaymentStatus_ThrowsException_ReturnsBadRequest() throws Exception {
-        // Given
         String paymentId = "payment123";
         String status = "INVALID_STATUS";
         String errorMessage = "Invalid payment status";
@@ -83,7 +80,6 @@ class AdminControllerTest {
         when(paymentService.updatePaymentStatus(paymentId, status))
                 .thenThrow(new IllegalArgumentException(errorMessage));
 
-        // When & Then
         mockMvc.perform(put("/api/v1/payment/admin/{paymentId}/status", paymentId)
                         .param("status", status)
                         .contentType(MediaType.APPLICATION_JSON))
@@ -97,7 +93,6 @@ class AdminControllerTest {
 
     @Test
     void getPendingPayments_Success() throws Exception {
-        // Given
         List<PaymentResponse> mockPayments = Arrays.asList(
                 createMockPaymentResponse("payment1", PaymentStatus.PENDING),
                 createMockPaymentResponse("payment2", PaymentStatus.PENDING)
@@ -105,7 +100,6 @@ class AdminControllerTest {
         
         when(paymentService.getPendingPayments()).thenReturn(mockPayments);
 
-        // When & Then
         mockMvc.perform(get("/api/v1/payment/admin/pending")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -122,7 +116,6 @@ class AdminControllerTest {
 
     @Test
     void getPendingRefunds_Success() throws Exception {
-        // Given
         List<RefundResponse> mockRefunds = Arrays.asList(
                 createMockRefundResponse(UUID.randomUUID().toString(), RefundStatus.PENDING),
                 createMockRefundResponse(UUID.randomUUID().toString(), RefundStatus.PENDING)
@@ -130,7 +123,6 @@ class AdminControllerTest {
         
         when(refundService.getPendingRefunds()).thenReturn(mockRefunds);
 
-        // When & Then
         mockMvc.perform(get("/api/v1/payment/admin/refunds/pending")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -143,7 +135,6 @@ class AdminControllerTest {
 
     @Test
     void processRefund_Success() throws Exception {
-        // Given
         String refundId = UUID.randomUUID().toString();
         String status = "ACCEPTED";
         String processedBy = "admin1";
@@ -153,7 +144,6 @@ class AdminControllerTest {
         when(refundService.processRefund(refundId, status, processedBy))
                 .thenReturn(mockResponse);
 
-        // When & Then
         mockMvc.perform(put("/api/v1/payment/admin/refunds/{refundId}/process", refundId)
                         .param("status", status)
                         .param("processedBy", processedBy)
@@ -168,7 +158,6 @@ class AdminControllerTest {
 
     @Test
     void processRefund_InvalidStatus_ReturnsBadRequest() throws Exception {
-        // Given
         String refundId = UUID.randomUUID().toString();
         String status = "INVALID_STATUS";
         String processedBy = "admin1";
@@ -177,7 +166,6 @@ class AdminControllerTest {
         when(refundService.processRefund(refundId, status, processedBy))
                 .thenThrow(new IllegalArgumentException(errorMessage));
 
-        // When & Then
         mockMvc.perform(put("/api/v1/payment/admin/refunds/{refundId}/process", refundId)
                         .param("status", status)
                         .param("processedBy", processedBy)
@@ -192,13 +180,11 @@ class AdminControllerTest {
 
     @Test
     void getRefund_Success() throws Exception {
-        // Given
         String refundId = UUID.randomUUID().toString();
         RefundResponse mockResponse = createMockRefundResponse(refundId, RefundStatus.PENDING);
         
         when(refundService.getRefund(refundId)).thenReturn(mockResponse);
 
-        // When & Then
         mockMvc.perform(get("/api/v1/payment/admin/refunds/{refundId}", refundId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -210,14 +196,12 @@ class AdminControllerTest {
 
     @Test
     void getRefund_NotFound_ReturnsNotFound() throws Exception {
-        // Given
         String refundId = UUID.randomUUID().toString();
         String errorMessage = "Refund not found";
         
         when(refundService.getRefund(refundId))
                 .thenThrow(new RuntimeException(errorMessage));
 
-        // When & Then
         mockMvc.perform(get("/api/v1/payment/admin/refunds/{refundId}", refundId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
@@ -228,7 +212,6 @@ class AdminControllerTest {
         verify(refundService, times(1)).getRefund(refundId);
     }
 
-    // Helper methods for creating mock objects
     private PaymentResponse createMockPaymentResponse() {
         return createMockPaymentResponse("payment123", PaymentStatus.PAID);
     }

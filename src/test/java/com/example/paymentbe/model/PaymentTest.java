@@ -117,7 +117,7 @@ class PaymentTest {
                 .build();
 
         Payment payment3 = Payment.builder()
-                .id(UUID.randomUUID())  // Different ID
+                .id(UUID.randomUUID())
                 .userId(sharedUserId)
                 .courseId(sharedCourseId)
                 .amount(100.0)
@@ -130,13 +130,11 @@ class PaymentTest {
                 .updatedAt(now)
                 .build();
 
-        // Test equals
         assertEquals(payment1, payment2);
         assertNotEquals(payment1, payment3);
         assertNotEquals(payment1, null);
         assertNotEquals(payment1, "not a payment");
 
-        // Test hashCode
         assertEquals(payment1.hashCode(), payment2.hashCode());
         assertNotEquals(payment1.hashCode(), payment3.hashCode());
     }

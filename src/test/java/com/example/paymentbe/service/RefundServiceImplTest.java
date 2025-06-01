@@ -58,15 +58,12 @@ class RefundServiceImplTest {
 
     @Test
     void requestRefund_Success() {
-        // Given
         when(paymentRepository.findById(paymentUUID)).thenReturn(Optional.of(mockPayment));
         when(paymentRepository.save(any(Payment.class))).thenReturn(mockPayment);
         when(refundRepository.save(any(Refund.class))).thenReturn(mockRefund);
 
-        // When
         RefundResponse result = refundService.requestRefund(paymentId, refundRequest);
 
-        // Then
         assertNotNull(result);
         assertEquals(paymentId, result.getPaymentId().toString());
         assertEquals("Product not as described", result.getReason());
@@ -74,12 +71,10 @@ class RefundServiceImplTest {
         assertNotNull(result.getCreatedAt());
         assertNotNull(result.getRequestedAt());
 
-        // Verify payment status was updated
         ArgumentCaptor<Payment> paymentCaptor = ArgumentCaptor.forClass(Payment.class);
         verify(paymentRepository).save(paymentCaptor.capture());
         assertEquals(PaymentStatus.REFUND_REQUESTED, paymentCaptor.getValue().getStatus());
 
-        // Verify refund was created
         ArgumentCaptor<Refund> refundCaptor = ArgumentCaptor.forClass(Refund.class);
         verify(refundRepository).save(refundCaptor.capture());
         assertEquals(mockPayment, refundCaptor.getValue().getPayment());
@@ -93,10 +88,8 @@ class RefundServiceImplTest {
 
     @Test
     void requestRefund_PaymentNotFound_ThrowsException() {
-        // Given
         when(paymentRepository.findById(paymentUUID)).thenReturn(Optional.empty());
 
-        // When & Then
         RuntimeException exception = assertThrows(RuntimeException.class, 
             () -> refundService.requestRefund(paymentId, refundRequest));
         
@@ -109,11 +102,9 @@ class RefundServiceImplTest {
 
     @Test
     void requestRefund_NotPaidPayment_ThrowsException() {
-        // Given
         mockPayment.setStatus(PaymentStatus.PENDING);
         when(paymentRepository.findById(paymentUUID)).thenReturn(Optional.of(mockPayment));
 
-        // When & Then
         IllegalStateException exception = assertThrows(IllegalStateException.class, 
             () -> refundService.requestRefund(paymentId, refundRequest));
         
@@ -126,11 +117,9 @@ class RefundServiceImplTest {
 
     @Test
     void requestRefund_ExistingRefund_ThrowsException() {
-        // Given
         when(paymentRepository.findById(paymentUUID)).thenReturn(Optional.of(mockPayment));
         when(refundRepository.existsByPaymentId(paymentUUID)).thenReturn(true);
 
-        // When & Then
         IllegalStateException exception = assertThrows(IllegalStateException.class, 
             () -> refundService.requestRefund(paymentId, refundRequest));
         
@@ -144,14 +133,11 @@ class RefundServiceImplTest {
 
     @Test
     void getPendingRefunds_Success() {
-        // Given
         List<Refund> mockRefunds = Arrays.asList(mockRefund);
         when(refundRepository.findByStatus(RefundStatus.PENDING)).thenReturn(mockRefunds);
 
-        // When
         List<RefundResponse> result = refundService.getPendingRefunds();
 
-        // Then
         assertNotNull(result);
         assertEquals(1, result.size());
         
@@ -166,14 +152,11 @@ class RefundServiceImplTest {
 
     @Test
     void getRefund_Success() {
-        // Given
         UUID refundId = UUID.randomUUID();
         when(refundRepository.findById(refundId)).thenReturn(Optional.of(mockRefund));
 
-        // When
         RefundResponse result = refundService.getRefund(refundId.toString());
 
-        // Then
         assertNotNull(result);
         assertEquals(mockRefund.getId().toString(), result.getId().toString());
         assertEquals(mockRefund.getPayment().getId().toString(), result.getPaymentId().toString());
@@ -185,11 +168,9 @@ class RefundServiceImplTest {
 
     @Test
     void getRefund_NotFound_ThrowsException() {
-        // Given
         UUID refundId = UUID.randomUUID();
         when(refundRepository.findById(refundId)).thenReturn(Optional.empty());
 
-        // When & Then
         RuntimeException exception = assertThrows(RuntimeException.class, 
             () -> refundService.getRefund(refundId.toString()));
         
@@ -200,7 +181,6 @@ class RefundServiceImplTest {
 
     @Test
     void testRefundEqualsAndHashCode() {
-        // Arrange
         UUID sharedId = UUID.randomUUID();
         Payment payment = new Payment();
         LocalDateTime now = LocalDateTime.now();
@@ -235,7 +215,6 @@ class RefundServiceImplTest {
                 .requestedAt(now)
                 .build();
 
-        // Assert
         assertEquals(refund1, refund2);
         assertEquals(refund1.hashCode(), refund2.hashCode());
         assertNotEquals(refund1, refund3);
@@ -244,16 +223,13 @@ class RefundServiceImplTest {
 
     @Test
     void processRefund_Success_Accepted() {
-        // Given
         UUID refundId = UUID.randomUUID();
         when(refundRepository.findById(refundId)).thenReturn(Optional.of(mockRefund));
         when(paymentRepository.save(any(Payment.class))).thenReturn(mockPayment);
         when(refundRepository.save(any(Refund.class))).thenReturn(mockRefund);
 
-        // When
         RefundResponse result = refundService.processRefund(refundId.toString(), "ACCEPTED", "admin");
 
-        // Then
         assertNotNull(result);
         assertEquals(RefundStatus.ACCEPTED, result.getStatus());
         assertEquals("admin", result.getProcessedBy());
@@ -269,16 +245,13 @@ class RefundServiceImplTest {
 
     @Test
     void processRefund_Success_Rejected() {
-        // Given
         UUID refundId = UUID.randomUUID();
         when(refundRepository.findById(refundId)).thenReturn(Optional.of(mockRefund));
         when(paymentRepository.save(any(Payment.class))).thenReturn(mockPayment);
         when(refundRepository.save(any(Refund.class))).thenReturn(mockRefund);
 
-        // When
         RefundResponse result = refundService.processRefund(refundId.toString(), "REJECTED", "admin");
 
-        // Then
         assertNotNull(result);
         assertEquals(RefundStatus.REJECTED, result.getStatus());
         assertEquals("admin", result.getProcessedBy());
@@ -294,11 +267,9 @@ class RefundServiceImplTest {
 
     @Test
     void processRefund_NotFound() {
-        // Given
         UUID refundId = UUID.randomUUID();
         when(refundRepository.findById(refundId)).thenReturn(Optional.empty());
 
-        // When & Then
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> refundService.processRefund(refundId.toString(), "ACCEPTED", "admin"));
 
@@ -310,12 +281,10 @@ class RefundServiceImplTest {
 
     @Test
     void processRefund_NotPending() {
-        // Given
         UUID refundId = UUID.randomUUID();
         mockRefund.setStatus(RefundStatus.ACCEPTED);
         when(refundRepository.findById(refundId)).thenReturn(Optional.of(mockRefund));
 
-        // When & Then
         IllegalStateException exception = assertThrows(IllegalStateException.class,
                 () -> refundService.processRefund(refundId.toString(), "ACCEPTED", "admin"));
 
@@ -331,7 +300,6 @@ class RefundServiceImplTest {
         UUID refundId = UUID.randomUUID();
         when(refundRepository.findById(refundId)).thenReturn(Optional.of(mockRefund));
 
-        // When & Then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> refundService.processRefund(refundId.toString(), "INVALID_STATUS", "admin"));
 
@@ -342,7 +310,6 @@ class RefundServiceImplTest {
 
     @Test
     void testPaymentEqualsAndHashCode() {
-        // Arrange
         UUID sharedId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID courseId = UUID.randomUUID();
@@ -374,7 +341,7 @@ class RefundServiceImplTest {
                 .build();
                 
         Payment payment3 = Payment.builder()
-                .id(UUID.randomUUID())  // Different ID
+                .id(UUID.randomUUID())  
                 .userId(userId)
                 .courseId(courseId)
                 .amount(100.0)
@@ -385,13 +352,11 @@ class RefundServiceImplTest {
                 .updatedAt(now)
                 .build();
 
-        // Assert
         assertEquals(payment1, payment2);
         assertEquals(payment1.hashCode(), payment2.hashCode());
         assertNotEquals(payment1, payment3);
         assertNotEquals(payment1.hashCode(), payment3.hashCode());
-        
-        // Test equals with null and different object type
+
         assertNotEquals(payment1, null);
         assertNotEquals(payment1, "not a payment");
     }
@@ -448,7 +413,6 @@ class RefundServiceImplTest {
         assertNotNull(response.getPayment());
     }
 
-    // Helper methods
     private Payment createMockPayment() {
         Payment payment = new Payment();
         payment.setId(paymentUUID);

@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 public class CreditCardStrategy implements PaymentStrategy {
     @Override
     public boolean process(PaymentRequest request) {
-        // Simulasi validasi kartu kredit sederhana
         String cardNumber = request.getCardNumber();
         String cvc = request.getCardCvc();
         

@@ -40,11 +40,11 @@ class BankTransferStrategyTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-        "123456789", // Too short
-        "123456789012345678901", // Too long
-        "abcd1234567890", // Contains letters
-        "12345-67890", // Contains special characters
-        " 1234567890 " // Contains spaces
+        "123456789",
+        "123456789012345678901",
+        "abcd1234567890",
+        "12345-67890",
+        " 1234567890 "
     })
     void process_InvalidBankAccount_ReturnsFalse(String bankAccount) {
         request.setBankAccount(bankAccount);
@@ -53,7 +53,7 @@ class BankTransferStrategyTest {
 
     @Test
     void process_ValidLongBankAccount_ReturnsTrue() {
-        request.setBankAccount("12345678901234567890"); // 20 digits
+        request.setBankAccount("12345678901234567890");
         assertTrue(strategy.process(request));
     }
 } 
