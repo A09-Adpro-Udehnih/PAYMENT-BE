@@ -29,18 +29,18 @@ class JwtUtilsTest {
     }
 
     @Test
-    void constructor_WithValidSecret_ShouldCreateInstance() {
+    void constructorWithValidSecretShouldCreateInstance() {
         JwtUtils utils = new JwtUtils(validSecret);
         assertNotNull(utils);
     }
 
     @Test
-    void constructor_WithNullSecret_ShouldCreateInstance() {
+    void constructorWithNullSecretShouldCreateInstance() {
         assertDoesNotThrow(() -> new JwtUtils(null));
     }
 
     @Test
-    void getSigningKey_WithValidSecret_ShouldReturnKey() throws Exception {
+    void getSigningKeyWithValidSecretShouldReturnKey() throws Exception {
         JwtUtils utils = new JwtUtils(validSecret);
 
         java.lang.reflect.Method method = JwtUtils.class.getDeclaredMethod("getSigningKey");
@@ -51,7 +51,7 @@ class JwtUtilsTest {
     }
 
     @Test
-    void getSigningKey_WithNullSecret_ShouldThrowException() throws Exception {
+    void getSigningKeyWithNullSecretShouldThrowException() throws Exception {
         JwtUtils utils = new JwtUtils(null);
 
         java.lang.reflect.Method method = JwtUtils.class.getDeclaredMethod("getSigningKey");
@@ -63,7 +63,7 @@ class JwtUtilsTest {
     }
 
     @Test
-    void getUserIdFromJwtToken_WithValidToken_ShouldReturnUserId() {
+    void getUserIdFromJwtTokenWithValidTokenShouldReturnUserId() {
         String userId = "testUser123";
         String token = createValidToken(userId);
 
@@ -73,7 +73,7 @@ class JwtUtilsTest {
     }
 
     @Test
-    void getUserIdFromJwtToken_WithInvalidToken_ShouldThrowException() {
+    void getUserIdFromJwtTokenWithInvalidTokenShouldThrowException() {
         String invalidToken = "invalid.token.here";
 
         assertThrows(Exception.class, () -> {
@@ -82,7 +82,7 @@ class JwtUtilsTest {
     }
 
     @Test
-    void validateJwtToken_WithValidToken_ShouldReturnTrue() {
+    void validateJwtTokenWithValidTokenShouldReturnTrue() {
         String token = createValidToken("testUser");
 
         boolean result = jwtUtils.validateJwtToken(token);
@@ -91,7 +91,7 @@ class JwtUtilsTest {
     }
 
     @Test
-    void validateJwtToken_WithInvalidSignature_ShouldReturnFalse() {
+    void validateJwtTokenWithInvalidSignatureShouldReturnFalse() {
         String tokenWithInvalidSignature = createTokenWithInvalidSignature();
 
         boolean result = jwtUtils.validateJwtToken(tokenWithInvalidSignature);
@@ -100,28 +100,28 @@ class JwtUtilsTest {
     }
 
     @Test
-    void validateJwtToken_WithMalformedToken_ShouldReturnFalse() {
+    void validateJwtTokenWithMalformedTokenShouldReturnFalse() {
         String malformedToken = "malformed.token";
         boolean result = jwtUtils.validateJwtToken(malformedToken);
         assertFalse(result);
     }
 
     @Test
-    void validateJwtToken_WithNullToken_ShouldReturnFalse() {
+    void validateJwtTokenWithNullTokenShouldReturnFalse() {
         String nullToken = null;
         boolean result = jwtUtils.validateJwtToken(nullToken);
         assertFalse(result);
     }
 
     @Test
-    void validateJwtToken_WithEmptyToken_ShouldReturnFalse() {
+    void validateJwtTokenWithEmptyTokenShouldReturnFalse() {
         String emptyToken = "";
         boolean result = jwtUtils.validateJwtToken(emptyToken);
         assertFalse(result);
     }
 
     @Test
-    void validateJwtToken_WithExpiredToken_ShouldReturnFalse() {
+    void validateJwtTokenWithExpiredTokenShouldReturnFalse() {
         String expiredToken = createExpiredToken("testUser");
         boolean result = jwtUtils.validateJwtToken(expiredToken);
         assertFalse(result);

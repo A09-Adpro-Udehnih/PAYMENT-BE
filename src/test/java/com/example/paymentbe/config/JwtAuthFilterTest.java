@@ -41,7 +41,7 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    void doFilterInternal_WithValidToken_ShouldSetAuthentication() throws ServletException, IOException {
+    void doFilterInternalWithValidTokenShouldSetAuthentication() throws ServletException, IOException {
         String token = "valid-token";
         String userId = "user123";
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
@@ -56,7 +56,7 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    void doFilterInternal_WithInvalidToken_ShouldNotSetAuthentication() throws ServletException, IOException {
+    void doFilterInternalWithInvalidTokenShouldNotSetAuthentication() throws ServletException, IOException {
         String token = "invalid-token";
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtUtils.validateJwtToken(token)).thenReturn(false);
@@ -68,7 +68,7 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    void doFilterInternal_WithNoAuthHeader_ShouldNotSetAuthentication() throws ServletException, IOException {
+    void doFilterInternalWithNoAuthHeaderShouldNotSetAuthentication() throws ServletException, IOException {
         when(request.getHeader("Authorization")).thenReturn(null);
 
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
@@ -78,7 +78,7 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    void doFilterInternal_WithNonBearerToken_ShouldNotSetAuthentication() throws ServletException, IOException {
+    void doFilterInternalWithNonBearerTokenShouldNotSetAuthentication() throws ServletException, IOException {
         when(request.getHeader("Authorization")).thenReturn("Basic dXNlcjpwYXNz");
 
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
@@ -88,7 +88,7 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    void doFilterInternal_WithValidationException_ShouldNotSetAuthentication() throws ServletException, IOException {
+    void doFilterInternalWithValidationExceptionShouldNotSetAuthentication() throws ServletException, IOException {
         String token = "valid-token";
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtUtils.validateJwtToken(token)).thenThrow(new RuntimeException("Validation failed"));
@@ -100,7 +100,7 @@ class JwtAuthFilterTest {
     }
 
     @Test
-    void doFilterInternal_WithEmptyToken_ShouldNotSetAuthentication() throws ServletException, IOException {
+    void doFilterInternalWithEmptyTokenShouldNotSetAuthentication() throws ServletException, IOException {
         when(request.getHeader("Authorization")).thenReturn("Bearer ");
 
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
